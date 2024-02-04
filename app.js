@@ -3,6 +3,17 @@ import express from 'express';
 const app = express();
 app.use(express.json());
 
+// Custom middleware
+// app.use((req, res, next) => {
+//   console.log('Hello from custom middleware 👋');
+//   next();
+// });
+
+// app.use((req, res, next) => {
+//   req.requestTime = new Date().toISOString();
+//   next();
+// });
+
 const getAllTours = (req, res) => {
   res.status(200).json({ data: 'Get all tours' });
 };
