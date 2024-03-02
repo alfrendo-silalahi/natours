@@ -7,12 +7,10 @@ export const createUser = (req, res) => {
 };
 
 export const getUser = (req, res) => {
-  console.log(req.params);
   res.status(200).json({ data: `User with id ${req.params.id}` });
 };
 
 export const updateUser = (req, res) => {
-  console.log(req.params);
   res.status(200).json({ data: `User with id ${req.params.id} updated` });
 };
 

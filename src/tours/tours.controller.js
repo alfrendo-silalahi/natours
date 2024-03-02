@@ -7,12 +7,10 @@ export const createTour = (req, res) => {
 };
 
 export const getTour = (req, res) => {
-  console.log(req.params);
   res.status(200).json({ data: `Tour with id ${req.params.id}` });
 };
 
 export const updateTour = (req, res) => {
-  console.log(req.params);
   res.status(200).json({ data: `Tour with id ${req.params.id} updated` });
 };
 
