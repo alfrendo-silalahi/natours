@@ -9,6 +9,7 @@ const app = express();
 // 1) Middlewares
 app.use(express.json());
 app.use(morgan('dev'));
+app.use(express.static('./public'));
 
 // 2) Routes
 app.use('/api/v1/tours', tourRouter);
