@@ -1,9 +1,40 @@
-export const getAllTours = (req, res) => {
-  res.status(200).json({ data: 'Get all tours' });
+import Tour from './tours.model.js';
+
+export const getAllTours = async (req, res) => {
+  try {
+    const tours = await Tour.find();
+    res.status(200).json({
+      status: 'success',
+      data: {
+        tours,
+      },
+    });
+  } catch (err) {
+    console.log(`Error: ${err.message}`);
+    return res.status(400).json({
+      status: 'fail',
+      message: err.message,
+    });
+  }
 };
 
-export const createTour = (req, res) => {
-  res.status(201).json({ requestBody: req.body });
+export const createTour = async (req, res) => {
+  const tour = new Tour(req.body);
+  try {
+    const newTour = await tour.save();
+    res.status(201).json({
+      status: 'success',
+      data: {
+        tour: newTour,
+      },
+    });
+  } catch (err) {
+    console.log(`Error: ${err.message}`);
+    return res.status(400).json({
+      status: 'Bad request',
+      message: err.message,
+    });
+  }
 };
 
 export const getTour = (req, res) => {
