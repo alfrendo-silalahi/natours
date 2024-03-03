@@ -20,6 +20,8 @@
     "prefer-destructuring": ["error", { "object": true, "array": false }],
     "no-unused-vars": ["error", { "argsIgnorePattern": "req|res|next|val" }],
     "import/first": "off",
-    "import/extensions": "off"
+    "import/extensions": "off",
+    "import/prefer-default-export": "off",
+    "radix": "off"
   }
 }
