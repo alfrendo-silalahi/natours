@@ -10,7 +10,7 @@ export const getAllTours = async (req, res) => {
       },
     });
   } catch (err) {
-    return res.status(400).json({
+    res.status(400).json({
       status: 'fail',
       message: err.message,
     });
@@ -28,7 +28,7 @@ export const createTour = async (req, res) => {
       },
     });
   } catch (err) {
-    return res.status(400).json({
+    res.status(400).json({
       status: 'Bad request',
       message: err.message,
     });
@@ -44,17 +44,37 @@ export const getTour = async (req, res) => {
     }
     res.status(200).json({ status: 'success', data: tour });
   } catch (err) {
-    return res.status(400).json({
+    res.status(400).json({
       status: 'fail',
       message: err.message,
     });
   }
 };
 
-export const updateTour = (req, res) => {
-  res.status(200).json({ data: `Tour with id ${req.params.id} updated` });
+export const updateTour = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tour = await Tour.findByIdAndUpdate(id, req.body, { new: true });
+    res.status(200).json({ status: 'success', data: tour });
+  } catch (err) {
+    res.status(400).json({
+      status: 'fail',
+      message: err.message,
+    });
+  }
 };
 
-export const deleteTour = (req, res) => {
-  res.status(200).json({ data: `Tour with id ${req.params.id} deleted` });
+export const deleteTour = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await Tour.findOneAndDelete({ _id: id });
+    res.status(200).json({
+      status: 'success',
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'fail',
+      message: err.message,
+    });
+  }
 };
