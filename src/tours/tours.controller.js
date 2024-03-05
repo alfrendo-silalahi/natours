@@ -10,7 +10,6 @@ export const getAllTours = async (req, res) => {
       },
     });
   } catch (err) {
-    console.log(`Error: ${err.message}`);
     return res.status(400).json({
       status: 'fail',
       message: err.message,
@@ -29,7 +28,6 @@ export const createTour = async (req, res) => {
       },
     });
   } catch (err) {
-    console.log(`Error: ${err.message}`);
     return res.status(400).json({
       status: 'Bad request',
       message: err.message,
@@ -37,8 +35,20 @@ export const createTour = async (req, res) => {
   }
 };
 
-export const getTour = (req, res) => {
-  res.status(200).json({ data: `Tour with id ${req.params.id}` });
+export const getTour = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tour = await Tour.findById(id);
+    if (!tour) {
+      throw new Error(`No tour found with id ${id}`);
+    }
+    res.status(200).json({ status: 'success', data: tour });
+  } catch (err) {
+    return res.status(400).json({
+      status: 'fail',
+      message: err.message,
+    });
+  }
 };
 
 export const updateTour = (req, res) => {
