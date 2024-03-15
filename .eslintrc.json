@@ -24,6 +24,7 @@
     "import/prefer-default-export": "off",
     "radix": "off",
     "import/no-extraneous-dependencies": "off",
-    "node/no-unpublished-import": "off"
+    "node/no-unpublished-import": "off",
+    "node/no-unsupported-features/es-syntax": "off"
   }
 }
