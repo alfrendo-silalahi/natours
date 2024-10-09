@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import slugify from 'slugify';
+import log from '../logger.js';
 
 const tourSchema = new mongoose.Schema(
   {
@@ -55,6 +56,10 @@ const tourSchema = new mongoose.Schema(
       default: Date.now(),
     },
     startDates: [Date],
+    secretTour: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     toJSON: {
@@ -85,6 +90,17 @@ tourSchema.pre('save', function (next) {
 //   console.log(doc);
 //   next();
 // });
+
+// QUERY MIDDLEWARE
+tourSchema.pre(/^find/, function (next) {
+  this.find({ secretTour: { $ne: true } });
+  next();
+});
+
+tourSchema.post(/^find/, (docs, next) => {
+  log.info(docs);
+  next();
+});
 
 const Tour = mongoose.model('Tour', tourSchema);
 

@@ -1,36 +1,6 @@
-# Natours API (Development Phase)
+# Natours {MERN Stack 🧩}
 
-## Description
-
-Lorem ipsum ...
-
-## Features
-
-Lorem ipsum ...
-
-## Installation
-
-1. Make sure you have Node.js and NPM installed on your computer.
-
-```bash
-$ node --version
-$ npm --version
-```
-
-2. Clone this repository to your local machine.
-3. Run the command `npm install` to install all dependencies.
-
-```bash
-$ npm install
-```
-
-## Usage
-
-1. Make sure MongoDB is running on your computer or cloud.
-2. Run the command `npm run start:dev` to start the server.
-
-```bash
-$ npm run start:dev
-```
-
-Lorem ipsum ...
+![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
+![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
+![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
+![NodeJS](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
