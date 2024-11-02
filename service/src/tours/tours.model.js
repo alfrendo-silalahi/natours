@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import slugify from 'slugify';
 // import validator from 'validator';
-import log from '../logger.js';
+import log from '../utils/logger.js';
 
 const tourSchema = new mongoose.Schema(
   {
