@@ -6,7 +6,7 @@
     "sourceType": "module"
   },
   "rules": {
-    "prettier/prettier": "error",
+    // "prettier/prettier": "error",
     "spaced-comment": "off",
     "no-console": "warn",
     "consistent-return": "off",
@@ -25,6 +25,7 @@
     "radix": "off",
     "import/no-extraneous-dependencies": "off",
     "node/no-unpublished-import": "off",
-    "node/no-unsupported-features/es-syntax": "off"
+    "node/no-unsupported-features/es-syntax": "off",
+    "prettier/prettier": ["error", { "endOfLine": "auto" }]
   }
 }

@@ -71,7 +71,10 @@ export const getTour = async (req, res) => {
 export const updateTour = async (req, res) => {
   try {
     const { id } = req.params;
-    const tour = await Tour.findByIdAndUpdate(id, req.body, { new: true });
+    const tour = await Tour.findByIdAndUpdate(id, req.body, {
+      new: true,
+      runValidators: true,
+    });
     res.status(200).json({ status: 'success', data: tour });
   } catch (err) {
     res.status(400).json({
@@ -135,13 +138,13 @@ export const getTourStats = async (req, res) => {
           avgPrice: 1,
         },
       },
-      {
-        $match: {
-          _id: {
-            $ne: 'EASY',
-          },
-        },
-      },
+      // {
+      //   $match: {
+      //     _id: {
+      //       $ne: 'EASY',
+      //     },
+      //   },
+      // },
     ]);
     res.status(200).json({ status: 'success', stats });
   } catch (err) {
