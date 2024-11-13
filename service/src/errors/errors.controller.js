@@ -6,6 +6,19 @@ const handleCastErrorDB = (err) => {
   return new CustomError(message, 400);
 };
 
+const handleDuplicateFieldsDB = (err) => {
+  const duplicateFields = err.keyValue;
+  const message = `Invalid input data. ${JSON.stringify(duplicateFields)} Please use another value!`;
+  return new CustomError(message, 404);
+};
+
+const handleValidationErrorDB = (err) => {
+  const errors = Object.values(err.errors).map((error) => error.message);
+
+  const message = `Invalid input data. ${errors.join('. ')}`;
+  return new CustomError(message, 400);
+};
+
 const sendErrorDev = (err, res) => {
   res.status(err.statusCode).json({
     status: err.status,
@@ -44,9 +57,19 @@ export default function globalErrorHandler(err, req, res, next) {
     sendErrorDev(err, res);
   } else if (process.env.NODE_ENV === 'production') {
     let error = { ...err, name: err.name };
+
     if (error.name === 'CastError') {
       error = handleCastErrorDB(error);
     }
+
+    if (error.code === 11000) {
+      error = handleDuplicateFieldsDB(error);
+    }
+
+    if (error.name === 'ValidationError') {
+      error = handleValidationErrorDB(error);
+    }
+
     sendErrorProd(error, res);
   }
 }
