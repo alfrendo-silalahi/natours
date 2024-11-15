@@ -20,7 +20,7 @@ if (process.env.NODE_ENV === 'development') {
 
 // 2) Routes
 app.use('/api/v1/tours', tourRouter);
-app.use('/api/v1/users', userRouter);
+app.use('/api/v1/auth', userRouter);
 
 // Handle route yang tidak didefinisikan
 // Hanya akan dieksekusi jika path sebelumnya tidak ada yang sesuai

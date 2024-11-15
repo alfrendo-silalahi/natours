@@ -1,19 +1,23 @@
-export const getAllUsers = (req, res) => {
-  res.status(200).json({ data: 'Get all users' });
-};
+import catchAsync from '../utils/catch-async.js';
+import CustomError from '../utils/error.js';
+import User from './users.model.js';
 
-export const createUser = (req, res) => {
-  res.status(201).json({ requestBody: req.body });
-};
+export const signup = catchAsync(async (req, res, next) => {
+  const userReq = req.body;
 
-export const getUser = (req, res) => {
-  res.status(200).json({ data: `User with id ${req.params.id}` });
-};
+  // check if password and passwordConfirm is same or not
+  if (userReq.password !== userReq.passwordConfirm) {
+    throw new CustomError('password and passwordConfirm not same', 404);
+  }
 
-export const updateUser = (req, res) => {
-  res.status(200).json({ data: `User with id ${req.params.id} updated` });
-};
+  const newUser = await User.create({
+    name: userReq.name,
+    email: userReq.email,
+    password: userReq.password,
+  });
 
-export const deleteUser = (req, res) => {
-  res.status(200).json({ data: `User with id ${req.params.id} deleted` });
-};
+  res.status(201).json({
+    status: 'success',
+    data: newUser,
+  });
+});
