@@ -35,7 +35,8 @@ app.all('*', (req, res, next) => {
   // err.status = 'fail';
   // err.statusCode = 404;
 
-  next(new CustomError(`Can't find ${req.originalUrl} on this server`, 404)); // apapun yang dimasukkan ke dalam next() akan dianggap sebagai error, dan akan dilempar ke global error handler
+  // apapun yang dimasukkan ke dalam next() akan dianggap sebagai error, dan akan dilempar ke global error handler
+  next(new CustomError(`Can't find ${req.originalUrl} on this server`, 404));
 });
 
 app.use(globalErrorHandler);
