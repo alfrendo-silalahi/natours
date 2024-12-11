@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import validator from 'validator';
+import bycript from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -21,6 +22,15 @@ const userSchema = new mongoose.Schema({
   photo: {
     type: String,
   },
+});
+
+userSchema.pre('save', async function (next) {
+  // Only run this function if password is modified
+  if (!this.isModified('password')) return next();
+
+  // Hash the password with cost 12
+  this.password = await bycript.hash(this.password, 12);
+  next();
 });
 
 const User = mongoose.model('User', userSchema);
