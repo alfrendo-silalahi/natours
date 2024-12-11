@@ -7,7 +7,7 @@ export const signup = catchAsync(async (req, res, next) => {
 
   // check if password and passwordConfirm is same or not
   if (userReq.password !== userReq.passwordConfirm) {
-    throw new CustomError('password and passwordConfirm not same', 404);
+    throw new CustomError('password and passwordConfirm not same', 400);
   }
 
   const newUser = await User.create({
