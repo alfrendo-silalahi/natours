@@ -9,6 +9,7 @@ import CustomError from './utils/error.js';
 import tourRouter from './tours/tours.route.js';
 import userRouter from './users/users.route.js';
 import globalErrorHandler from './errors/errors.controller.js';
+import authRouter from './users/auth.route.js';
 
 const app = express();
 
@@ -20,7 +21,8 @@ if (process.env.NODE_ENV === 'development') {
 
 // 2) Routes
 app.use('/api/v1/tours', tourRouter);
-app.use('/api/v1/auth', userRouter);
+app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/users', userRouter);
 
 // Handle route yang tidak didefinisikan
 // Hanya akan dieksekusi jika path sebelumnya tidak ada yang sesuai

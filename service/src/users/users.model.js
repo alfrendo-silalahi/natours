@@ -18,6 +18,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'A user must have a password'],
     minlength: 8,
+    select: false,
   },
   photo: {
     type: String,
@@ -32,6 +33,13 @@ userSchema.pre('save', async function (next) {
   this.password = await bycript.hash(this.password, 12);
   next();
 });
+
+userSchema.methods.correctPassword = async function (
+  candidatePassword,
+  userPassword,
+) {
+  return await bycript.compare(candidatePassword, userPassword);
+};
 
 const User = mongoose.model('User', userSchema);
 
