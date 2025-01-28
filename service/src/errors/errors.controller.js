@@ -47,6 +47,12 @@ const sendErrorProd = (err, res) => {
   }
 };
 
+const handleJWTError = () =>
+  new CustomError('Invalid token. Please log in again!', 401);
+
+const handleTokenExpiredError = () =>
+  new CustomError('Token expired. Please log in again!', 401);
+
 export default function globalErrorHandler(err, req, res, next) {
   log.error(err.stack);
 
@@ -68,6 +74,14 @@ export default function globalErrorHandler(err, req, res, next) {
 
     if (error.name === 'ValidationError') {
       error = handleValidationErrorDB(error);
+    }
+
+    if (error.name === 'JsonWebTokenError') {
+      error = handleJWTError();
+    }
+
+    if (err.name === 'TokenExpiredError') {
+      error = handleTokenExpiredError();
     }
 
     sendErrorProd(error, res);

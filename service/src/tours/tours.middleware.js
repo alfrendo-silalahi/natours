@@ -1,5 +1,8 @@
+import { promisify } from 'util';
+import jwt from 'jsonwebtoken';
 import catchAsync from '../utils/catch-async.js';
 import CustomError from '../utils/error.js';
+import log from '../utils/logger.js';
 
 export const protect = catchAsync(async (req, res, next) => {
   // 1) Get token from Authorization header
@@ -12,6 +15,7 @@ export const protect = catchAsync(async (req, res, next) => {
   const token = req.headers.authorization.substring(7);
 
   // 2) Verification token
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
   // 3) Check if user still exists
 
