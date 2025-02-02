@@ -1,7 +1,7 @@
 import express from 'express';
 
 import * as tourController from './tours.controller.js';
-import * as tourMiddleware from './tours.middleware.js';
+import jwtFilter from '../filters/jwt.filter.js';
 // import * as tourMiddleware from './tours.middleware.js';
 
 const tourRouter = express.Router();
@@ -18,7 +18,7 @@ tourRouter.route('/monthly-plan/:year').get(tourController.getMonthlyPlan);
 
 tourRouter
   .route('/')
-  .get(tourMiddleware.protect, tourController.getAllTours)
+  .get(jwtFilter, tourController.getAllTours)
   .post(tourController.createTour);
 // .post(tourMiddleware.checkReqBody, tourController.createTour);
 

@@ -27,6 +27,8 @@ export const signup = catchAsync(async (req, res, next) => {
     name: userReq.name,
     email: userReq.email,
     password: userReq.password,
+    // Temporary
+    passwordChangedAt: userReq.passwordChangedAt,
   });
 
   const token = signToken(newUser._id);
