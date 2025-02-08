@@ -1,7 +1,7 @@
 import express from 'express';
 
 import * as tourController from './tours.controller.js';
-import jwtFilter from '../filters/jwt.filter.js';
+import jwtFilter from '../middlewares/jwt.middleware.js';
 // import * as tourMiddleware from './tours.middleware.js';
 
 const tourRouter = express.Router();

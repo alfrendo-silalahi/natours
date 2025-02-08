@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 
 import catchAsync from '../utils/catch-async.js';
 import CustomError from '../utils/error.js';
-import User from './users.model.js';
+import User from '../users/users.model.js';
 
 const signToken = (userId) =>
   jwt.sign(

@@ -9,7 +9,7 @@ import CustomError from './utils/error.js';
 import tourRouter from './tours/tours.route.js';
 import userRouter from './users/users.route.js';
 import globalErrorHandler from './errors/errors.controller.js';
-import authRouter from './users/auth.route.js';
+import authRouter from './auth/auth.route.js';
 
 const app = express();
 
