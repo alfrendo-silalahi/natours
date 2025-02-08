@@ -63,6 +63,7 @@ export default function globalErrorHandler(err, req, res, next) {
     sendErrorDev(err, res);
   } else if (process.env.NODE_ENV === 'production') {
     let error = { ...err, name: err.name };
+    error.message = err.message;
 
     if (error.name === 'CastError') {
       error = handleCastErrorDB(error);
