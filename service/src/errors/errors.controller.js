@@ -8,7 +8,7 @@ const handleCastErrorDB = (err) => {
 
 const handleDuplicateFieldsDB = (err) => {
   const duplicateFields = err.keyValue;
-  const message = `Invalid input data ${JSON.stringify(duplicateFields)}. Please use another value!`;
+  const message = `Invalid data input ${JSON.stringify(duplicateFields)}. Please use another value!`;
   return new CustomError(message, 404);
 };
 

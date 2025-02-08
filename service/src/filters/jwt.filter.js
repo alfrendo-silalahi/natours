@@ -32,6 +32,9 @@ const jwtFilter = catchAsync(async (req, res, next) => {
       401,
     );
 
+  // Grant access to protected route
+  req.user = freshUser;
+
   next();
 });
 

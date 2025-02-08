@@ -44,8 +44,6 @@ export const getTour = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const tour = await Tour.findById(id);
   if (!tour) {
-    // next(new CustomError(`No tour found with id ${id}`, 404));
-    // return;
     throw new CustomError(`No tour found with id ${id}`, 404);
   }
   res.status(200).json({ status: 'success', data: { tour } });
@@ -91,7 +89,6 @@ export const getTourStats = catchAsync(async (req, res, next) => {
     {
       $group: {
         _id: { $toUpper: '$difficulty' },
-        // _id: '$ratingsAverage',
         numTours: {
           $sum: 1,
         },
@@ -117,13 +114,6 @@ export const getTourStats = catchAsync(async (req, res, next) => {
         avgPrice: 1,
       },
     },
-    // {
-    //   $match: {
-    //     _id: {
-    //       $ne: 'EASY',
-    //     },
-    //   },
-    // },
   ]);
   res.status(200).json({ status: 'success', stats });
 });
