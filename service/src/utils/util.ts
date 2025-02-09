@@ -1,5 +1,9 @@
+import { ParsedQs } from 'qs';
+
 export class APIFeatures {
-  constructor(query, queryString) {
+  queryString: ParsedQs;
+
+  constructor(query, queryString: ParsedQs) {
     this.query = query;
     this.queryString = queryString;
   }

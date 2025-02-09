@@ -1,3 +1,4 @@
+import { NextFunction } from 'express';
 import CustomError from '../utils/error.js';
 import log from '../utils/logger.js';
 
@@ -53,7 +54,12 @@ const handleJWTError = () =>
 const handleTokenExpiredError = () =>
   new CustomError('Token expired. Please log in again!', 401);
 
-export default function globalErrorHandler(err, req, res, next) {
+export default function globalErrorHandler(
+  err: CustomError,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
   log.error(err.stack);
 
   err.statusCode = err.statusCode || 500;

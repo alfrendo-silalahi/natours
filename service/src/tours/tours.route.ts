@@ -1,10 +1,10 @@
-import express from 'express';
+import express, { Router } from 'express';
 
-import * as tourController from './tours.controller.js';
-import jwtFilter from '../middlewares/jwt.middleware.js';
+import * as tourController from './tours.controller.ts';
+import jwtFilter from '../middlewares/jwt.middleware.ts';
 // import * as tourMiddleware from './tours.middleware.js';
 
-const tourRouter = express.Router();
+const tourRouter: Router = express.Router();
 
 // Not used anymore
 // tourRouter.param('id', tourMiddleware.checkParamId);
