@@ -1,46 +1,62 @@
-import jwt from 'jsonwebtoken';
+import jwt, { Secret } from 'jsonwebtoken';
 
 import catchAsync from '../utils/catch-async.js';
 import CustomError from '../utils/error.js';
 import User from '../users/users.model.js';
+import { Request, Response, NextFunction } from 'express';
 
-const signToken = (userId) =>
-  jwt.sign(
+const signToken = (userId: string): string => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET is not defined!');
+  }
+
+  return jwt.sign(
     {
       id: userId,
     },
-    process.env.JWT_SECRET,
+    process.env.JWT_SECRET as Secret,
     {
-      expiresIn: process.env.JWT_EXPIRES_IN,
+      expiresIn: process.env.JWT_EXPIRES_IN || '30d',
     },
   );
+};
 
-export const signup = catchAsync(async (req, res, next) => {
-  const userReq = req.body;
+type UserRequest = {
+  name: string;
+  email: string;
+  password: string;
+  passwordConfirm: string;
+  passwordChangedAt: Date;
+};
 
-  // check if password and passwordConfirm is same or not
-  if (userReq.password !== userReq.passwordConfirm) {
-    throw new CustomError('password and passwordConfirm not same', 400);
-  }
+export const signup = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userReq: UserRequest = req.body;
 
-  const newUser = await User.create({
-    name: userReq.name,
-    email: userReq.email,
-    password: userReq.password,
-    // Temporary
-    passwordChangedAt: userReq.passwordChangedAt,
-  });
+    // check if password and passwordConfirm is same or not
+    if (userReq.password !== userReq.passwordConfirm) {
+      throw new CustomError('password and passwordConfirm not same', 400);
+    }
 
-  const token = signToken(newUser._id);
+    const newUser = await User.create({
+      name: userReq.name,
+      email: userReq.email,
+      password: userReq.password,
+      // Temporary
+      passwordChangedAt: userReq.passwordChangedAt,
+    });
 
-  res.status(201).json({
-    status: 'success',
-    token,
-    data: {
-      user: newUser,
-    },
-  });
-});
+    const token = signToken(newUser._id);
+
+    res.status(201).json({
+      status: 'success',
+      token,
+      data: {
+        user: newUser,
+      },
+    });
+  },
+);
 
 export const login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
