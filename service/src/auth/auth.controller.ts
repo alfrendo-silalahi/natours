@@ -1,4 +1,5 @@
-import jwt, { Secret } from 'jsonwebtoken';
+import jwt, { Secret, SignOptions } from 'jsonwebtoken';
+import type { StringValue } from 'ms';
 
 import catchAsync from '../utils/catch-async.js';
 import CustomError from '../utils/error.js';
@@ -10,14 +11,21 @@ const signToken = (userId: string): string => {
     throw new Error('JWT_SECRET is not defined!');
   }
 
+  const secret: Secret = process.env.JWT_SECRET;
+
+  const expiresIn: StringValue = (process.env.JWT_EXPIRES_IN ||
+    '30d') as StringValue;
+
+  const signOptions: SignOptions = {
+    expiresIn,
+  };
+
   return jwt.sign(
     {
       id: userId,
     },
-    process.env.JWT_SECRET as Secret,
-    {
-      expiresIn: process.env.JWT_EXPIRES_IN || '30d',
-    },
+    secret,
+    signOptions,
   );
 };
 
