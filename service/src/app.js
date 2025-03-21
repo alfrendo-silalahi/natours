@@ -20,6 +20,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // 2) Routes
+app.use('/api/check-health', (req, res) => res.json({ status: 'OK' }));
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);
