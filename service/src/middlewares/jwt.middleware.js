@@ -4,7 +4,7 @@ import catchAsync from '../utils/catch-async.js';
 import CustomError from '../utils/error.js';
 import User from '../users/users.model.js';
 
-const jwtFilter = catchAsync(async (req, res, next) => {
+const jwtMiddleware = catchAsync(async (req, res, next) => {
   // 1) Get token from Authorization header
   if (
     !req.headers.authorization ||
@@ -28,7 +28,7 @@ const jwtFilter = catchAsync(async (req, res, next) => {
   // 4) Check if user changed password after token was issued
   if (freshUser.changedPasswordAfter(decoded.iat))
     throw new CustomError(
-      'User recently changed password, Please login again!',
+      'User recently changed password, please login again!',
       401,
     );
 
@@ -38,4 +38,4 @@ const jwtFilter = catchAsync(async (req, res, next) => {
   next();
 });
 
-export default jwtFilter;
+export default jwtMiddleware;
