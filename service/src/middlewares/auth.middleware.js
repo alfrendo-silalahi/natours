@@ -3,8 +3,9 @@ import { promisify } from 'util';
 import catchAsync from '../utils/catch-async.js';
 import CustomError from '../utils/error.js';
 import User from '../users/users.model.js';
+import log from '../utils/logger.js';
 
-const jwtMiddleware = catchAsync(async (req, res, next) => {
+export const protect = catchAsync(async (req, res, next) => {
   // 1) Get token from Authorization header
   if (
     !req.headers.authorization ||
@@ -38,4 +39,15 @@ const jwtMiddleware = catchAsync(async (req, res, next) => {
   next();
 });
 
-export default jwtMiddleware;
+export const restrictTo =
+  (...roles) =>
+  (req, res, next) => {
+    log.info(roles);
+    if (!roles.includes(req.user.role)) {
+      throw new CustomError(
+        'You do not have permission to perform this action',
+        403,
+      );
+    }
+    next();
+  };

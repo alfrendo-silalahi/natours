@@ -27,6 +27,7 @@ export const signup = catchAsync(async (req, res, next) => {
     name: userReq.name,
     email: userReq.email,
     password: userReq.password,
+    role: userReq.role,
     // Temporary
     passwordChangedAt: userReq.passwordChangedAt,
   });
