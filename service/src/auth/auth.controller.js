@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken';
 import catchAsync from '../utils/catch-async.js';
 import CustomError from '../utils/error.js';
 import User from '../users/users.model.js';
+import redisClient from '../redis.js';
+import crypto from 'crypto';
 
 const signToken = (userId) =>
   jwt.sign(
@@ -63,5 +65,82 @@ export const login = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     token,
+  });
+});
+
+export const forgotPassword = catchAsync(async (req, res, next) => {
+  // 1) Get user based on email
+  const user = await User.findOne({ email: req.body.email });
+  if (!user) throw new CustomError('There is no user with email address', 404);
+
+  // 2) Generate random reset
+  // const resetToken = crypto.randomBytes(32).toString('hex');
+  // const hashedToken = crypto
+  //   .createHash('sha256')
+  //   .update(resetToken)
+  //   .digest('hex');
+
+  // 2) Generate OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  // 3) Send to Redis
+  await redisClient.setEx(`${user.id}_OTP`, 300, otp);
+
+  console.log(otp);
+
+  // 3) Send it user email
+
+  res.status(200).json({
+    status: 'success',
+    messaage: 'check your email for reset password otp',
+  });
+});
+
+export const validateForgotPasswordOtp = catchAsync(async (req, res, next) => {
+  const { email, otp } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) throw new CustomError('There is no user with email address', 404);
+
+  const otpFromCache = await redisClient.get(`${user.id}_OTP`);
+
+  if (otpFromCache !== otp) throw new CustomError('Invalid OTP!', 400);
+
+  await redisClient.del(`${user.id}_OTP`);
+
+  const resetPasswordToken = crypto.randomUUID().toString();
+  await redisClient.setEx(
+    `${user.id}_RESET_PASSWORD_TOKEN`,
+    300,
+    resetPasswordToken,
+  );
+
+  res.status(200).json({
+    status: 'success',
+    message: 'OTP valid',
+    data: {
+      resetPasswordToken,
+    },
+  });
+});
+
+export const resetPassword = catchAsync(async (req, res, next) => {
+  const { email, resetPasswordToken, newPassword } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) throw new CustomError('There is no user with email address', 404);
+
+  const resetPasswordTokenCache = await redisClient.get(
+    `${user.id}_RESET_PASSWORD_TOKEN`,
+  );
+  if (resetPasswordTokenCache !== resetPasswordToken)
+    throw new CustomError('Invalid reset password token!', 400);
+
+  // TODO
+  user.password = newPassword;
+
+  await redisClient.del(`${user.id}_RESET_PASSWORD_TOKEN`);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Password updated successfully',
   });
 });
