@@ -86,8 +86,6 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
   // 3) Send to Redis
   await redisClient.setEx(`${user.id}_OTP`, 300, otp);
 
-  console.log(otp);
-
   // 3) Send it user email
 
   res.status(200).json({

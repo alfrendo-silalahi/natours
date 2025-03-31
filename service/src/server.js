@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import app from './app.js';
 import log from './utils/logger.js';
 
 process.on('uncaughtException', (err) => {
@@ -9,12 +10,9 @@ process.on('uncaughtException', (err) => {
 
 dotenv.config({ path: './.env' });
 
-import app from './app.js';
-
 // MongoDB Connection
-mongoose
-  .connect(process.env.DATABASE)
-  .then(() => log.info('DB connection successfully!'));
+await mongoose.connect(process.env.DATABASE);
+log.info('MongoDB connected successfully');
 
 const port = process.env.PORT;
 const server = app.listen(port, () => {
