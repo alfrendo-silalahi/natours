@@ -99,9 +99,9 @@ export const validateForgotPasswordOtp = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ email });
   if (!user) throw new CustomError('There is no user with email address', 404);
 
-  const otpFromCache = await redisClient.get(`${user.id}_OTP`);
+  const otpCache = await redisClient.get(`${user.id}_OTP`);
 
-  if (otpFromCache !== otp) throw new CustomError('Invalid OTP!', 400);
+  if (otpCache !== otp) throw new CustomError('Invalid OTP!', 400);
 
   await redisClient.del(`${user.id}_OTP`);
 
@@ -132,8 +132,8 @@ export const resetPassword = catchAsync(async (req, res, next) => {
   if (resetPasswordTokenCache !== resetPasswordToken)
     throw new CustomError('Invalid reset password token!', 400);
 
-  // TODO
   user.password = newPassword;
+  await user.save({ validateBeforeSave: false });
 
   await redisClient.del(`${user.id}_RESET_PASSWORD_TOKEN`);
 
