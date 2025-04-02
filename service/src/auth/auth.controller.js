@@ -1,10 +1,11 @@
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
+import nodemailer from 'nodemailer';
 
 import catchAsync from '../utils/catch-async.js';
 import CustomError from '../utils/error.js';
 import User from '../users/users.model.js';
 import redisClient from '../redis.js';
-import crypto from 'crypto';
 
 const signToken = (userId) =>
   jwt.sign(
@@ -86,7 +87,12 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
   // 3) Send to Redis
   await redisClient.setEx(`${user.id}_OTP`, 300, otp);
 
-  // 3) Send it user email
+  // 4) Send it user email
+  await sendEmail({
+    email: user.email,
+    subject: 'Your password reset OTP (valid for 5 min)',
+    message: `OTP: ${otp}`,
+  });
 
   res.status(200).json({
     status: 'success',
@@ -142,3 +148,26 @@ export const resetPassword = catchAsync(async (req, res, next) => {
     message: 'Password updated successfully',
   });
 });
+
+const sendEmail = async (options) => {
+  // 1) Create a transporter
+  const transporter = nodemailer.createTransport({
+    host: process.env.EMAIL_HOST,
+    port: process.env.EMAIL_PORT,
+    auth: {
+      user: process.env.EMAIL_USERNAME,
+      pass: process.env.EMAIL_PASSWORD,
+    },
+  });
+
+  // 2) Define email options
+  const mailOptions = {
+    from: 'natours@email.com',
+    to: options.email,
+    subject: options.subject,
+    text: options.message,
+  };
+
+  // 3) Send email
+  await transporter.sendMail(mailOptions);
+};

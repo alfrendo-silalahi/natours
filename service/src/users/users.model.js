@@ -37,6 +37,7 @@ userSchema.pre('save', async function (next) {
 
   // Hash the password with cost 12
   this.password = await bycript.hash(this.password, 12);
+  this.passwordChangedAt = Date.now();
   next();
 });
 
