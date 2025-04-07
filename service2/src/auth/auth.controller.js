@@ -2,9 +2,9 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 
-import catchAsync from '../utils/catch-async.js';
-import CustomError from '../utils/error.js';
-import User from '../users/users.model.js';
+import catchAsync from '../utils/catch-async.ts';
+import CustomError from '../utils/error.ts';
+import User from '../users/users.model.ts';
 import redisClient from '../redis.ts';
 
 const signToken = (userId) =>

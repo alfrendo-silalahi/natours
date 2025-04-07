@@ -1,4 +1,4 @@
-import CustomError from '../utils/error.js'; // TODO
+import CustomError from '../utils/error.ts'; // TODO
 import log from '../utils/logger.ts';
 
 const handleCastErrorDB = (err) => {

@@ -2,8 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 
 import Tour, { ITour } from './tours.model.ts'; //TODO
 import { APIFeatures } from '../utils/util.ts'; //TODO
-import catchAsync from '../utils/catch-async.js'; //TODO
-import CustomError from '../utils/error.js'; //TODO
+import catchAsync from '../utils/catch-async.ts'; //TODO
+import CustomError from '../utils/error.ts'; //TODO
 import { HydratedDocument } from 'mongoose';
 
 export const aliasTopTours = (

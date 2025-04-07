@@ -1,8 +1,17 @@
-import mongoose from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 import validator from 'validator';
 import bycript from 'bcryptjs';
 
-const userSchema = new mongoose.Schema({
+export interface IUser extends Document {
+  name: string;
+  email: string;
+  password: string;
+  passwordChangedAt: Date;
+  photo: string;
+  role: string;
+}
+
+const userSchema = new mongoose.Schema<IUser>({
   name: {
     type: String,
     required: [true, 'A user must have a name'],
