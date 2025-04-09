@@ -4,10 +4,11 @@ import nodemailer from 'nodemailer';
 
 import catchAsync from '../utils/catch-async.ts';
 import CustomError from '../utils/error.ts';
-import User from '../users/users.model.ts';
+import User, { IUser, UserDoc } from '../users/users.model.ts';
 import redisClient from '../redis.ts';
+import { Request, Response, NextFunction } from 'express';
 
-const signToken = (userId) =>
+const signToken = (userId: string) =>
   jwt.sign(
     {
       id: userId,
@@ -127,29 +128,50 @@ export const validateForgotPasswordOtp = catchAsync(async (req, res, next) => {
   });
 });
 
-export const resetPassword = catchAsync(async (req, res, next) => {
-  const { email, resetPasswordToken, newPassword } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) throw new CustomError('There is no user with email address', 404);
+interface ResetPasswordRequest {
+  email: string;
+  resetPasswordToken: string;
+  newPassword: string;
+}
 
-  const resetPasswordTokenCache = await redisClient.get(
-    `${user.id}_RESET_PASSWORD_TOKEN`,
-  );
-  if (resetPasswordTokenCache !== resetPasswordToken)
-    throw new CustomError('Invalid reset password token!', 400);
+export const resetPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const { email, resetPasswordToken, newPassword } =
+      req.body as ResetPasswordRequest;
 
-  user.password = newPassword;
-  await user.save({ validateBeforeSave: false });
+    const user: UserDoc | null = await User.findOne({ email });
+    if (!user)
+      throw new CustomError('There is no user with email address', 404);
 
-  await redisClient.del(`${user.id}_RESET_PASSWORD_TOKEN`);
+    const resetPasswordTokenCache: string | null = await redisClient.get(
+      `${user.id}_RESET_PASSWORD_TOKEN`,
+    );
 
-  res.status(200).json({
-    status: 'success',
-    message: 'Password updated successfully',
-  });
-});
+    if (!resetPasswordTokenCache)
+      throw new CustomError('reset password token cache not found', 404);
 
-const sendEmail = async (options) => {
+    if (resetPasswordTokenCache !== resetPasswordToken)
+      throw new CustomError('Invalid reset password token!', 400);
+
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false });
+
+    await redisClient.del(`${user.id}_RESET_PASSWORD_TOKEN`);
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Password updated successfully',
+    });
+  },
+);
+
+type MailOptions = {
+  email: string;
+  subject: string;
+  message: string;
+};
+
+const sendEmail = async (options: MailOptions) => {
   // 1) Create a transporter
   const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,

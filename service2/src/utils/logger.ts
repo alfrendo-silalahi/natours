@@ -6,7 +6,7 @@ const log: Logger = winston.createLogger({
     winston.format.colorize(),
     winston.format.timestamp(),
     winston.format.printf(
-      ({ timestamp, level, message }) => `${timestamp} [${level}]: ${message}`, //TODO
+      ({ timestamp, level, message }) => `${timestamp} [${level}]: ${message}`,
     ),
   ),
   transports: [new winston.transports.Console()],

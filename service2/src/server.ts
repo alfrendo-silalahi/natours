@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import app from './app.ts'; //IN PROGRESS
-import log from './utils/logger.ts'; //TODO
+import app from './app.ts';
+import log from './utils/logger.ts';
 
 process.on('uncaughtException', (err: Error) => {
   log.error(err.message);

@@ -1,8 +1,13 @@
-import mongoose, { Document } from 'mongoose';
+import mongoose, {
+  Document,
+  Query,
+  CallbackWithoutResultAndOptionalError,
+  Model,
+} from 'mongoose';
 import slugify from 'slugify';
 import log from '../utils/logger.ts';
 
-export interface ITour extends Document {
+export interface ITour {
   name: string;
   slug: string;
   duration: number;
@@ -21,7 +26,11 @@ export interface ITour extends Document {
   secretTour: boolean;
 }
 
-const tourSchema = new mongoose.Schema<ITour>(
+export interface TourDoc extends ITour, Document {}
+
+export interface TourModel extends Model<TourDoc> {}
+
+const tourSchema = new mongoose.Schema<TourDoc, TourModel>(
   {
     name: {
       type: String,
@@ -106,15 +115,18 @@ const tourSchema = new mongoose.Schema<ITour>(
   },
 );
 
-tourSchema.virtual('durationWeeks').get(function () {
+tourSchema.virtual('durationWeeks').get(function (): number {
   return this.duration / 7;
 });
 
 // DOCUMENT MIDDLEWARE: runs before .save() and .create()
-tourSchema.pre('save', function (next) {
-  this.slug = slugify(this.name, { lower: true });
-  next();
-});
+tourSchema.pre(
+  'save',
+  function (next: CallbackWithoutResultAndOptionalError): void {
+    this.slug = slugify(this.name, { lower: true });
+    next();
+  },
+);
 
 // tourSchema.pre('save', function (next) {
 //   console.log('Will save document ...');
@@ -127,25 +139,37 @@ tourSchema.pre('save', function (next) {
 // });
 
 // QUERY MIDDLEWARE
-tourSchema.pre(/^find/, function (next) {
-  this.find({ secretTour: { $ne: true } });
-  next();
-});
+tourSchema.pre(
+  /^find/,
+  function (
+    this: Query<Array<TourDoc>, TourDoc>,
+    next: CallbackWithoutResultAndOptionalError,
+  ): void {
+    this.find({ secretTour: { $ne: true } });
+    next();
+  },
+);
 
-tourSchema.post(/^find/, (docs, next) => {
-  log.info(docs);
-  next();
-});
+tourSchema.post(
+  /^find/,
+  (docs: TourDoc[], next: CallbackWithoutResultAndOptionalError): void => {
+    log.info(docs);
+    next();
+  },
+);
 
 // AGGREATION MIDDLEWARE
-tourSchema.pre('aggregate', function (next) {
-  this.pipeline().unshift({
-    $match: { secretTour: { $ne: true } },
-  });
+tourSchema.pre(
+  'aggregate',
+  function (next: CallbackWithoutResultAndOptionalError): void {
+    this.pipeline().unshift({
+      $match: { secretTour: { $ne: true } },
+    });
 
-  // console.log(this.pipeline()); // `this` di sini akan merujuk pada agregasi saat ini
-  next();
-});
+    // console.log(this.pipeline()); // `this` di sini akan merujuk pada agregasi saat ini
+    next();
+  },
+);
 
 const Tour = mongoose.model('Tour', tourSchema);
 

@@ -1,6 +1,6 @@
 import express, { Router } from 'express';
 
-import * as authController from './auth.controller.js'; //TODO
+import * as authController from './auth.controller.ts'; //TODO
 
 const authRouter: Router = express.Router();
 

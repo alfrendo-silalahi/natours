@@ -1,5 +1,5 @@
 import { createClient, RedisClientType } from 'redis';
-import log from './utils/logger.ts'; //IN PROGRESS
+import log from './utils/logger.ts';
 
 const redisClient: RedisClientType = createClient();
 

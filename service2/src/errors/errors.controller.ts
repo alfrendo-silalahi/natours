@@ -1,3 +1,4 @@
+import { Request, Response } from 'express';
 import CustomError from '../utils/error.ts'; // TODO
 import log from '../utils/logger.ts';
 
@@ -28,7 +29,7 @@ const sendErrorDev = (err, res) => {
   });
 };
 
-const sendErrorProd = (err, res) => {
+const sendErrorProd = (err: Request, res: Response) => {
   // Operational, trusted error: send message to client
   if (err.isOperational) {
     res.status(err.statusCode).json({
