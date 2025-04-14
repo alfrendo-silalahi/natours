@@ -85,7 +85,8 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
   // 3) Send to Redis
-  await redisClient.setEx(`${user.id}_OTP`, 300, otp);
+  const redisOtpKey = `otp:${user.id}`;
+  await redisClient.setEx(redisOtpKey, 300, otp);
 
   // 4) Send it user email
   await sendEmail({
@@ -105,18 +106,16 @@ export const validateForgotPasswordOtp = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ email });
   if (!user) throw new CustomError('There is no user with email address', 404);
 
-  const otpCache = await redisClient.get(`${user.id}_OTP`);
+  const redisOtpKey = `otp:${user.id}`;
+  const otpCache = await redisClient.get(redisOtpKey);
 
   if (otpCache !== otp) throw new CustomError('Invalid OTP!', 400);
 
-  await redisClient.del(`${user.id}_OTP`);
+  await redisClient.del(redisOtpKey);
 
   const resetPasswordToken = crypto.randomUUID().toString();
-  await redisClient.setEx(
-    `${user.id}_RESET_PASSWORD_TOKEN`,
-    300,
-    resetPasswordToken,
-  );
+  const redisResetPasswordTokenKey = `reset_password_token:${user.id}`;
+  await redisClient.setEx(redisResetPasswordTokenKey, 300, resetPasswordToken);
 
   res.status(200).json({
     status: 'success',
@@ -132,8 +131,9 @@ export const resetPassword = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ email });
   if (!user) throw new CustomError('There is no user with email address', 404);
 
+  const redisResetPasswordTokenKey = `reset_password_token:${user.id}`;
   const resetPasswordTokenCache = await redisClient.get(
-    `${user.id}_RESET_PASSWORD_TOKEN`,
+    redisResetPasswordTokenKey,
   );
   if (resetPasswordTokenCache !== resetPasswordToken)
     throw new CustomError('Invalid reset password token!', 400);
@@ -141,7 +141,7 @@ export const resetPassword = catchAsync(async (req, res, next) => {
   user.password = newPassword;
   await user.save({ validateBeforeSave: false });
 
-  await redisClient.del(`${user.id}_RESET_PASSWORD_TOKEN`);
+  await redisClient.del(redisResetPasswordTokenKey);
 
   res.status(200).json({
     status: 'success',
