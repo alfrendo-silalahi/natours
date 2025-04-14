@@ -100,7 +100,8 @@ export const forgotPassword = catchAsync(
     const otp: string = Math.floor(100000 + Math.random() * 900000).toString();
 
     // 3) Send to Redis
-    await redisClient.setEx(`${user.id}_OTP`, 300, otp);
+    const cacheOtpKey: string = `otp:${user.id}`;
+    await redisClient.setEx(cacheOtpKey, 300, otp);
 
     // 4) Send it user email
     await sendEmail({
@@ -123,19 +124,17 @@ export const validateForgotPasswordOtp = catchAsync(
     if (!user)
       throw new CustomError('There is no user with email address', 404);
 
-    const otpCache: string | null = await redisClient.get(`${user.id}_OTP`);
+    const cacheOtpKey: string = `otp:${user.id}`;
+    const otpCache: string | null = await redisClient.get(cacheOtpKey);
     if (!otpCache) throw new CustomError('otp cache not found!', 404);
 
     if (otpCache !== otp) throw new CustomError('Invalid OTP!', 400);
 
-    await redisClient.del(`${user.id}_OTP`);
+    await redisClient.del(cacheOtpKey);
 
     const resetPasswordToken: string = crypto.randomUUID().toString();
-    await redisClient.setEx(
-      `${user.id}_RESET_PASSWORD_TOKEN`,
-      300,
-      resetPasswordToken,
-    );
+    const cacheResetPasswordToken: string = `reset_password_token:${user.id}`;
+    await redisClient.setEx(cacheResetPasswordToken, 300, resetPasswordToken);
 
     res.status(200).json({
       status: 'success',
@@ -162,8 +161,9 @@ export const resetPassword = catchAsync(
     if (!user)
       throw new CustomError('There is no user with email address', 404);
 
+    const cacheResetPasswordToken: string = `reset_password_token:${user.id}`;
     const resetPasswordTokenCache: string | null = await redisClient.get(
-      `${user.id}_RESET_PASSWORD_TOKEN`,
+      cacheResetPasswordToken,
     );
 
     if (!resetPasswordTokenCache)
@@ -175,7 +175,7 @@ export const resetPassword = catchAsync(
     user.password = newPassword;
     await user.save({ validateBeforeSave: false });
 
-    await redisClient.del(`${user.id}_RESET_PASSWORD_TOKEN`);
+    await redisClient.del(cacheResetPasswordToken);
 
     res.status(200).json({
       status: 'success',
