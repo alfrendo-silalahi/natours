@@ -149,6 +149,24 @@ export const resetPassword = catchAsync(async (req, res, next) => {
   });
 });
 
+export const updatePassword = catchAsync(async (req, res, next) => {
+  const { email, password, newPassword } = req.body;
+
+  const user = await User.findOne({ email }).select('+password');
+  if (!user) throw new CustomError('There is no user with email address', 404);
+
+  const correct = await user.correctPassword(password, user.password);
+  if (!correct) throw new CustomError('Current password invalid', 400);
+
+  user.password = newPassword;
+  user.save({ validateBeforeSave: false });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Password updated successfully',
+  });
+});
+
 const sendEmail = async (options) => {
   // 1) Create a transporter
   const transporter = nodemailer.createTransport({
