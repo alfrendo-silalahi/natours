@@ -1,6 +1,7 @@
 import express, { Router } from 'express';
 
-import * as authController from './auth.controller.ts'; //TODO
+import * as authController from './auth.controller.ts';
+import { protect } from '../middlewares/auth.middleware.ts';
 
 const authRouter: Router = express.Router();
 
@@ -12,5 +13,6 @@ authRouter.post(
   authController.validateForgotPasswordOtp,
 );
 authRouter.post('/reset-password', authController.resetPassword);
+authRouter.post('/update-password', protect, authController.updatePassword);
 
 export default authRouter;

@@ -184,6 +184,43 @@ export const resetPassword = catchAsync(
   },
 );
 
+// TODO: fix data type
+export const updatePassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const {
+      email,
+      password,
+      passwordConfirm,
+      newPassword,
+      newPasswordConfirm,
+    } = req.body;
+
+    if (password !== passwordConfirm)
+      throw new CustomError('password and passwordConfirm not same', 400);
+
+    if (newPassword !== newPasswordConfirm)
+      throw new CustomError('newPassword and newPasswordConfirm not same', 400);
+
+    const user: UserDoc = await User.findOne({ email }).select('+password');
+    if (!user)
+      throw new CustomError('There is no user with email address', 404);
+
+    const correct: boolean = await user.correctPassword(
+      password,
+      user.password,
+    );
+    if (!correct) throw new CustomError('Current password invalid', 400);
+
+    user.password = newPassword;
+    user.save({ validateBeforeSave: false });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Password updated successfully',
+    });
+  },
+);
+
 type MailOptions = {
   email: string;
   subject: string;
