@@ -150,7 +150,14 @@ export const resetPassword = catchAsync(async (req, res, next) => {
 });
 
 export const updatePassword = catchAsync(async (req, res, next) => {
-  const { email, password, newPassword } = req.body;
+  const { email, password, passwordConfirm, newPassword, newPasswordConfirm } =
+    req.body;
+
+  if (password !== passwordConfirm)
+    throw new CustomError('password and passwordConfirm not same', 400);
+
+  if (newPassword !== newPasswordConfirm)
+    throw new CustomError('newPassword and newPasswordConfirm not same', 400);
 
   const user = await User.findOne({ email }).select('+password');
   if (!user) throw new CustomError('There is no user with email address', 404);
