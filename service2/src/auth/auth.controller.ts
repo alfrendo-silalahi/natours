@@ -7,6 +7,7 @@ import CustomError from '../utils/error.ts';
 import User, { IUser, UserDoc } from '../users/users.model.ts';
 import redisClient from '../redis.ts';
 import { Request, Response, NextFunction } from 'express';
+import SMTPPool from 'nodemailer/lib/smtp-pool/index';
 
 const signToken = (userId: string) => {
   const jwtSecret: Secret = process.env.JWT_SECRET! as Secret;
@@ -24,9 +25,32 @@ const signToken = (userId: string) => {
   );
 };
 
+interface SignUpRequest {
+  name: string;
+  email: string;
+  password: string;
+  passwordConfirm: string;
+  role: string;
+  passwordChangedAt: string;
+}
+
+interface SignUpDataResponse {
+  user: UserDoc;
+}
+
+interface SignUpResponse {
+  status: string;
+  token: string;
+  data: SignUpDataResponse;
+}
+
 export const signup = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const userReq = req.body;
+  async (
+    req: Request<{}, {}, SignUpRequest>,
+    res: Response<SignUpResponse>,
+    _next: NextFunction,
+  ) => {
+    const userReq: SignUpRequest = req.body;
 
     // check if password and passwordConfirm is same or not
     if (userReq.password !== userReq.passwordConfirm) {
@@ -55,7 +79,7 @@ export const signup = catchAsync(
 );
 
 export const login = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: Response, _next: NextFunction) => {
     const { email, password } = req.body;
 
     // 1) Check if email and password exist
@@ -227,11 +251,15 @@ type MailOptions = {
   message: string;
 };
 
+// TODO: fix data type
+const host: string | undefined = process.env.EMAIL_HOST;
+const port: number | undefined = parseInt(process.env.EMAIL_PORT!);
+
 const sendEmail = async (options: MailOptions) => {
   // 1) Create a transporter
   const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
+    host: host,
+    port: port,
     auth: {
       user: process.env.EMAIL_USERNAME,
       pass: process.env.EMAIL_PASSWORD,
