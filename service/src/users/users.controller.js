@@ -44,3 +44,10 @@ const filterObj = (obj, ...allowedFields) => {
   });
   return newObj;
 };
+
+export const deleteMe = catchAsync(async (req, res, next) => {
+  await User.findByIdAndUpdate(req.user.id, { active: false });
+  res.status(204).json({
+    status: 'success',
+  });
+});

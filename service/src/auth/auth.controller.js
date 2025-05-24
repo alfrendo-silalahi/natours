@@ -58,10 +58,13 @@ export const login = catchAsync(async (req, res, next) => {
   const user = await User.findOne({ email }).select('+password');
   if (!user) throw new CustomError('Incorrect email or password', 401);
 
+  // 3) Check if user is active or not
+  if (!user.active) throw new CustomError('user are not active anymore', 404);
+
   const correct = await user.correctPassword(password, user.password);
   if (!correct) throw new CustomError('Incorrect email or password', 401);
 
-  // 3) If everything ok, send token to client
+  // 4) If everything ok, send token to client
   const token = signToken(user._id);
   res.status(200).json({
     status: 'success',

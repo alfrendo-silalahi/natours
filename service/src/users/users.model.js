@@ -29,6 +29,11 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'guide', 'lead-guide', 'admin'],
     default: 'user',
   },
+  active: {
+    type: Boolean,
+    default: true,
+    select: false,
+  },
 });
 
 userSchema.pre('save', async function (next) {
@@ -38,6 +43,12 @@ userSchema.pre('save', async function (next) {
   // Hash the password with cost 12
   this.password = await bycript.hash(this.password, 12);
   this.passwordChangedAt = Date.now();
+  next();
+});
+
+userSchema.pre(/^find/, function (next) {
+  // this points to current query
+  this.where({ active: true });
   next();
 });
 
