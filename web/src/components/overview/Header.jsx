@@ -10,7 +10,7 @@ export default function Header() {
         <form className="nav__search">
           <button className="nav__search-btn">
             <svg>
-              <use xlink:href="img/icons.svg#icon-search"></use>
+              <use href="img/icons.svg#icon-search"></use>
             </svg>
           </button>
           <input
