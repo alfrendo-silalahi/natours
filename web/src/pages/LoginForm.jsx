@@ -1,7 +1,11 @@
 import { useState } from "react";
-import { login } from "../services/auth";
+import { login as loginService } from "../services/auth";
+import { useAuth } from "../context/auth.context";
+import { Navigate } from "react-router";
 
 export default function LoginForm() {
+  const { isAuthenticated, login } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -15,8 +19,11 @@ export default function LoginForm() {
 
   async function handleLoginForm(e) {
     e.preventDefault();
-    await login({ email, password });
+    const response = await loginService({ email, password });
+    login(response.data.token);
   }
+
+  if (isAuthenticated) return <Navigate to="/tours" />;
 
   return (
     <div className="main">

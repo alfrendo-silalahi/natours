@@ -1,6 +1,9 @@
 import { NavLink } from "react-router";
+import { useAuth } from "../../context/auth.context";
 
 export default function Header() {
+  const { logout } = useAuth();
+
   return (
     <header className="header">
       <nav className="nav nav--tours">
@@ -32,8 +35,11 @@ export default function Header() {
           <span>Alfrendo</span>
         </a>
 
-        {/* <button className="nav__el">Log in</button>
-<button className="nav__el nav__el--cta">Sign up</button> */}
+        <button className="nav__el">Log in</button>
+        <button className="nav__el nav__el--cta">Sign up</button>
+        <button onClick={logout} className="nav__el nav__el--cta">
+          Logout
+        </button>
       </nav>
     </header>
   );

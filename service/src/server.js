@@ -8,6 +8,7 @@ process.on('uncaughtException', (err) => {
 });
 
 // MongoDB Connection
+console.log(process.env.DATABASE);
 await mongoose.connect(process.env.DATABASE);
 log.info('MongoDB connected successfully');
 

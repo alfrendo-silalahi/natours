@@ -18,7 +18,7 @@ const signToken = (userId) =>
     },
   );
 
-export const signup = catchAsync(async (req, res, next) => {
+export const signup = catchAsync(async (req, res, _next) => {
   const userReq = req.body;
 
   // check if password and passwordConfirm is same or not
@@ -46,7 +46,7 @@ export const signup = catchAsync(async (req, res, next) => {
   });
 });
 
-export const login = catchAsync(async (req, res, next) => {
+export const login = catchAsync(async (req, res, _next) => {
   const { email, password } = req.body;
 
   // 1) Check if email and password exist
@@ -72,7 +72,7 @@ export const login = catchAsync(async (req, res, next) => {
   });
 });
 
-export const forgotPassword = catchAsync(async (req, res, next) => {
+export const forgotPassword = catchAsync(async (req, res, _next) => {
   // 1) Get user based on email
   const user = await User.findOne({ email: req.body.email });
   if (!user) throw new CustomError('There is no user with email address', 404);
@@ -104,7 +104,7 @@ export const forgotPassword = catchAsync(async (req, res, next) => {
   });
 });
 
-export const validateForgotPasswordOtp = catchAsync(async (req, res, next) => {
+export const validateForgotPasswordOtp = catchAsync(async (req, res, _next) => {
   const { email, otp } = req.body;
   const user = await User.findOne({ email });
   if (!user) throw new CustomError('There is no user with email address', 404);
