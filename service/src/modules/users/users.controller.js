@@ -1,8 +1,7 @@
-import catchAsync from '../utils/catch-async.js';
-import CustomError from '../utils/error.js';
+import CustomError from '../../utils/error.js';
 import User from './users.model.js';
 
-export const getAllUsers = catchAsync(async (req, res, next) => {
+export const getAllUsers = async (req, res, next) => {
   const users = await User.find();
 
   res.status(200).json({
@@ -12,9 +11,9 @@ export const getAllUsers = catchAsync(async (req, res, next) => {
       users,
     },
   });
-});
+};
 
-export const updateMe = catchAsync(async (req, res, next) => {
+export const updateMe = async (req, res, next) => {
   // 1) create error if user POST password data
   if (req.body.password || req.body.passwordConfirm)
     throw new CustomError(
@@ -35,7 +34,7 @@ export const updateMe = catchAsync(async (req, res, next) => {
       user: updatedUser,
     },
   });
-});
+};
 
 const filterObj = (obj, ...allowedFields) => {
   const newObj = {};
@@ -45,9 +44,9 @@ const filterObj = (obj, ...allowedFields) => {
   return newObj;
 };
 
-export const deleteMe = catchAsync(async (req, res, next) => {
+export const deleteMe = async (req, res, next) => {
   await User.findByIdAndUpdate(req.user.id, { active: false });
   res.status(204).json({
     status: 'success',
   });
-});
+};

@@ -2,10 +2,13 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 
-import catchAsync from '../utils/catch-async.js';
-import CustomError from '../utils/error.js';
+import CustomError from '../../utils/error.js';
 import User from '../users/users.model.js';
-import redisClient from '../redis.js';
+import redisClient from '../../redis.js';
+
+const roles = {
+  USER: 'user',
+};
 
 const signToken = (userId) =>
   jwt.sign(
@@ -18,7 +21,7 @@ const signToken = (userId) =>
     },
   );
 
-export const signup = catchAsync(async (req, res, _next) => {
+export const signup = async (req, res, _next) => {
   const userReq = req.body;
 
   // check if password and passwordConfirm is same or not
@@ -30,8 +33,7 @@ export const signup = catchAsync(async (req, res, _next) => {
     name: userReq.name,
     email: userReq.email,
     password: userReq.password,
-    role: userReq.role,
-    // Temporary
+    role: roles.USER,
     passwordChangedAt: userReq.passwordChangedAt,
   });
 
@@ -44,9 +46,9 @@ export const signup = catchAsync(async (req, res, _next) => {
       user: newUser,
     },
   });
-});
+};
 
-export const login = catchAsync(async (req, res, _next) => {
+export const login = async (req, res, _next) => {
   const { email, password } = req.body;
 
   // 1) Check if email and password exist
@@ -70,9 +72,9 @@ export const login = catchAsync(async (req, res, _next) => {
     status: 'success',
     token,
   });
-});
+};
 
-export const forgotPassword = catchAsync(async (req, res, _next) => {
+export const forgotPassword = async (req, res, _next) => {
   // 1) Get user based on email
   const user = await User.findOne({ email: req.body.email });
   if (!user) throw new CustomError('There is no user with email address', 404);
@@ -102,9 +104,9 @@ export const forgotPassword = catchAsync(async (req, res, _next) => {
     status: 'success',
     messaage: 'check your email for reset password otp',
   });
-});
+};
 
-export const validateForgotPasswordOtp = catchAsync(async (req, res, _next) => {
+export const validateForgotPasswordOtp = async (req, res, _next) => {
   const { email, otp } = req.body;
   const user = await User.findOne({ email });
   if (!user) throw new CustomError('There is no user with email address', 404);
@@ -127,9 +129,9 @@ export const validateForgotPasswordOtp = catchAsync(async (req, res, _next) => {
       resetPasswordToken,
     },
   });
-});
+};
 
-export const resetPassword = catchAsync(async (req, res, next) => {
+export const resetPassword = async (req, res, next) => {
   const { email, resetPasswordToken, newPassword } = req.body;
   const user = await User.findOne({ email });
   if (!user) throw new CustomError('There is no user with email address', 404);
@@ -150,9 +152,9 @@ export const resetPassword = catchAsync(async (req, res, next) => {
     status: 'success',
     message: 'Password updated successfully',
   });
-});
+};
 
-export const updatePassword = catchAsync(async (req, res, next) => {
+export const updatePassword = async (req, res, next) => {
   const { email, password, passwordConfirm, newPassword, newPasswordConfirm } =
     req.body;
 
@@ -175,7 +177,7 @@ export const updatePassword = catchAsync(async (req, res, next) => {
     status: 'success',
     message: 'Password updated successfully',
   });
-});
+};
 
 const sendEmail = async (options) => {
   // 1) Create a transporter

@@ -1,11 +1,10 @@
 import jwt from 'jsonwebtoken';
 import { promisify } from 'util';
-import catchAsync from '../utils/catch-async.js';
 import CustomError from '../utils/error.js';
-import User from '../users/users.model.js';
+import User from '../modules/users/users.model.js';
 import log from '../utils/logger.js';
 
-export const protect = catchAsync(async (req, res, next) => {
+export const protect = async (req, res, next) => {
   // 1) Get token from Authorization header
   if (
     !req.headers.authorization ||
@@ -37,7 +36,7 @@ export const protect = catchAsync(async (req, res, next) => {
   req.user = freshUser;
 
   next();
-});
+};
 
 export const restrictTo =
   (...roles) =>

@@ -1,13 +1,9 @@
 import express from 'express';
 
 import * as tourController from './tours.controller.js';
-import * as authMiddleware from '../middlewares/auth.middleware.js';
-// import * as tourMiddleware from './tours.middleware.js';
+import * as authMiddleware from '../../middlewares/auth.middleware.js';
 
 const tourRouter = express.Router();
-
-// Not used anymore
-// tourRouter.param('id', tourMiddleware.checkParamId);
 
 tourRouter
   .route('/top-5-cheap')
@@ -20,7 +16,6 @@ tourRouter
   .route('/')
   .get(authMiddleware.protect, tourController.getAllTours)
   .post(tourController.createTour);
-// .post(tourMiddleware.checkReqBody, tourController.createTour);
 
 tourRouter
   .route('/:id')
