@@ -1,6 +1,8 @@
 import express from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 
 import CustomError from './utils/error.js';
 import tourRouter from './modules/tours/tours.route.js';
@@ -11,10 +13,24 @@ import authRouter from './modules/auth/auth.route.js';
 const app = express();
 
 // 1) Middlewares
-// User Morgan for logger
+// Security
+app.use(helmet());
+
+// Development logging
 if (process.env.NODE_ENV === 'dev') {
   app.use(morgan('dev'));
 }
+
+const limiter = rateLimit({
+  limit: 2,
+  windowMs: 15 * 60 * 1000,
+  message: {
+    error: 'Too many requests from this IP, please try again in 15 minutes!',
+  },
+});
+
+// Body parser, reading
+app.use(limiter);
 
 // CORS
 app.use(
@@ -25,7 +41,7 @@ app.use(
 );
 
 // JSON parser
-app.use(express.json());
+app.use(express.json({ limit: '10kb' }));
 
 // 2) Routes
 app.use('/api/check-health', (_req, res) => res.json({ status: 'ok' }));
