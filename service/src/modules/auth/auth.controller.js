@@ -4,7 +4,7 @@ import nodemailer from 'nodemailer';
 
 import CustomError from '../../utils/error.js';
 import User from '../users/users.model.js';
-import redisClient from '../../redis.js';
+import redisClient from '../../config/redis.config.js';
 
 const roles = {
   USER: 'user',
@@ -21,7 +21,7 @@ const signToken = (userId) =>
     },
   );
 
-export const signup = async (req, res, _next) => {
+export const signUp = async (req, res, _next) => {
   const userReq = req.body;
 
   // check if password and passwordConfirm is same or not
@@ -48,8 +48,9 @@ export const signup = async (req, res, _next) => {
   });
 };
 
-export const login = async (req, res, _next) => {
+export const signIn = async (req, res, _next) => {
   const { email, password } = req.body;
+  console.log({ email });
 
   // 1) Check if email and password exist
   if (!email || !password)

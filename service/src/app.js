@@ -32,6 +32,10 @@ const limiter = rateLimit({
 // Body parser, reading
 app.use(limiter);
 
+// Data sanization againt noSQL query injection
+
+// Data sanization againt XSS
+
 // CORS
 app.use(
   cors({

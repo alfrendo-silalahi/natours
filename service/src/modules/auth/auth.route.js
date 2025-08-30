@@ -5,8 +5,8 @@ import { protect } from '../../middlewares/auth.middleware.js';
 
 const authRouter = express.Router();
 
-authRouter.post('/signup', authController.signup);
-authRouter.post('/login', authController.login);
+authRouter.post('/sign-up', authController.signUp);
+authRouter.post('/sign-in', authController.signIn);
 authRouter.post('/forgot-password', authController.forgotPassword);
 authRouter.post(
   '/validate-forgot-password-otp',
