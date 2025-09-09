@@ -7,7 +7,9 @@
   "scripts": {
     "start:dev": "node --env-file=.env --watch ./src/server.js",
     "start:prod": "NODE_ENV=production node ./src/server.js",
-    "test": "vitest"
+    "test": "vitest",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [],
   "author": "Alfrendo Silalahi",
