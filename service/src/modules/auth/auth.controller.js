@@ -48,9 +48,8 @@ export const signUp = async (req, res, _next) => {
   });
 };
 
-export const signIn = async (req, res, _next) => {
+export const signIn = async (req, res) => {
   const { email, password } = req.body;
-  console.log({ email });
 
   // 1) Check if email and password exist
   if (!email || !password)
@@ -58,7 +57,11 @@ export const signIn = async (req, res, _next) => {
 
   // 2) Check if user exists & password is correct
   // Menggunakan + untuk memaksa field tertentu tetap dimasukkan
-  const user = await User.findOne({ email }).select('+password');
+  const user = await User.findOne({
+    email: {
+      $eq: email,
+    },
+  }).select('+password');
   if (!user) throw new CustomError('Incorrect email or password', 401);
 
   // 3) Check if user is active or not

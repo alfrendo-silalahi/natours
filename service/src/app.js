@@ -22,15 +22,17 @@ if (process.env.NODE_ENV === 'dev') {
 }
 
 const limiter = rateLimit({
-  limit: 2,
+  limit: 100,
   windowMs: 15 * 60 * 1000,
   message: {
     error: 'Too many requests from this IP, please try again in 15 minutes!',
   },
 });
 
-// Body parser, reading
 app.use(limiter);
+
+// JSON Body parser, reading data from body into req.body
+app.use(express.json({ limit: '10kb' }));
 
 // Data sanization againt noSQL query injection
 
@@ -43,9 +45,6 @@ app.use(
     methods: 'POST, GET, PUT, DELETE, PATCH',
   }),
 );
-
-// JSON parser
-app.use(express.json({ limit: '10kb' }));
 
 // 2) Routes
 app.use('/api/check-health', (_req, res) => res.json({ status: 'ok' }));
