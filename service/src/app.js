@@ -12,39 +12,30 @@ import authRouter from './modules/auth/auth.route.js';
 
 const app = express();
 
-// 1) Middlewares
-// Security
-app.use(helmet());
-
-// Development logging
-if (process.env.NODE_ENV === 'dev') {
-  app.use(morgan('dev'));
-}
-
-const limiter = rateLimit({
-  limit: 100,
-  windowMs: 15 * 60 * 1000,
-  message: {
-    error: 'Too many requests from this IP, please try again in 15 minutes!',
-  },
-});
-
-app.use(limiter);
-
-// JSON Body parser, reading data from body into req.body
-app.use(express.json({ limit: '10kb' }));
-
-// Data sanization againt noSQL query injection
-
-// Data sanization againt XSS
-
-// CORS
 app.use(
   cors({
     origin: 'http://localhost:5173',
     methods: 'POST, GET, PUT, DELETE, PATCH',
   }),
 );
+
+app.use(helmet());
+
+if (process.env.NODE_ENV === 'dev') {
+  app.use(morgan('dev'));
+}
+
+app.use(
+  rateLimit({
+    limit: 100,
+    windowMs: 15 * 60 * 1000,
+    message: {
+      error: 'Too many requests from this IP, please try again in 15 minutes!',
+    },
+  }),
+);
+
+app.use(express.json({ limit: '10kb' }));
 
 // 2) Routes
 app.use('/api/check-health', (_req, res) => res.json({ status: 'ok' }));
