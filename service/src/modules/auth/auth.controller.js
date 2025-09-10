@@ -1,10 +1,10 @@
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import nodemailer from 'nodemailer';
 
 import CustomError from '../../utils/error.js';
 import User from '../users/users.model.js';
 import redisClient from '../../config/redis.config.js';
+import { sendEmail } from '../../config/smtp.config.js';
 
 const roles = {
   USER: 'user',
@@ -154,29 +154,6 @@ export const updatePassword = async (req, res) => {
     status: 'success',
     message: 'Password updated successfully',
   });
-};
-
-const sendEmail = async (options) => {
-  // 1) Create a transporter
-  const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    auth: {
-      user: process.env.EMAIL_USERNAME,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-  });
-
-  // 2) Define email options
-  const mailOptions = {
-    from: 'natours@email.com',
-    to: options.email,
-    subject: options.subject,
-    text: options.message,
-  };
-
-  // 3) Send email
-  await transporter.sendMail(mailOptions);
 };
 
 const findUser = async (email, opt = { includePassword: true }) => {
