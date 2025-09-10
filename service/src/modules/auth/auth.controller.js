@@ -21,7 +21,7 @@ const signToken = (userId) =>
     },
   );
 
-export const signUp = async (req, res, _next) => {
+export const signUp = async (req, res) => {
   const userReq = req.body;
 
   // check if password and passwordConfirm is same or not
@@ -51,26 +51,11 @@ export const signUp = async (req, res, _next) => {
 export const signIn = async (req, res) => {
   const { email, password } = req.body;
 
-  // 1) Check if email and password exist
-  if (!email || !password)
-    throw new CustomError('Email and password required', 400);
-
-  // 2) Check if user exists & password is correct
-  // Menggunakan + untuk memaksa field tertentu tetap dimasukkan
-  const user = await User.findOne({
-    email: {
-      $eq: email,
-    },
-  }).select('+password');
-  if (!user) throw new CustomError('Incorrect email or password', 401);
-
-  // 3) Check if user is active or not
-  if (!user.active) throw new CustomError('user are not active anymore', 404);
+  const user = await findUser(email);
 
   const correct = await user.correctPassword(password, user.password);
   if (!correct) throw new CustomError('Incorrect email or password', 401);
 
-  // 4) If everything ok, send token to client
   const token = signToken(user._id);
   res.status(200).json({
     status: 'success',
@@ -78,26 +63,16 @@ export const signIn = async (req, res) => {
   });
 };
 
-export const forgotPassword = async (req, res, _next) => {
-  // 1) Get user based on email
-  const user = await User.findOne({ email: req.body.email });
-  if (!user) throw new CustomError('There is no user with email address', 404);
+export const forgotPassword = async (req, res) => {
+  const { email } = req.body;
 
-  // 2) Generate random reset
-  // const resetToken = crypto.randomBytes(32).toString('hex');
-  // const hashedToken = crypto
-  //   .createHash('sha256')
-  //   .update(resetToken)
-  //   .digest('hex');
+  const user = await findUser(email, { includePassword: false });
 
-  // 2) Generate OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-  // 3) Send to Redis
   const redisOtpKey = `otp:${user.id}`;
   await redisClient.setEx(redisOtpKey, 300, otp);
 
-  // 4) Send it user email
   await sendEmail({
     email: user.email,
     subject: 'Your password reset OTP (valid for 5 min)',
@@ -106,14 +81,13 @@ export const forgotPassword = async (req, res, _next) => {
 
   res.status(200).json({
     status: 'success',
-    messaage: 'check your email for reset password otp',
+    message: 'check your email for reset password otp',
   });
 };
 
-export const validateForgotPasswordOtp = async (req, res, _next) => {
+export const validateForgotPasswordOtp = async (req, res) => {
   const { email, otp } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) throw new CustomError('There is no user with email address', 404);
+  const user = await findUser(email, { includePassword: false });
 
   const redisOtpKey = `otp:${user.id}`;
   const otpCache = await redisClient.get(redisOtpKey);
@@ -135,10 +109,10 @@ export const validateForgotPasswordOtp = async (req, res, _next) => {
   });
 };
 
-export const resetPassword = async (req, res, next) => {
+export const resetPassword = async (req, res) => {
   const { email, resetPasswordToken, newPassword } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) throw new CustomError('There is no user with email address', 404);
+
+  const user = await findUser(email, { includePassword: false });
 
   const redisResetPasswordTokenKey = `reset_password_token:${user.id}`;
   const resetPasswordTokenCache = await redisClient.get(
@@ -158,7 +132,7 @@ export const resetPassword = async (req, res, next) => {
   });
 };
 
-export const updatePassword = async (req, res, next) => {
+export const updatePassword = async (req, res) => {
   const { email, password, passwordConfirm, newPassword, newPasswordConfirm } =
     req.body;
 
@@ -168,8 +142,7 @@ export const updatePassword = async (req, res, next) => {
   if (newPassword !== newPasswordConfirm)
     throw new CustomError('newPassword and newPasswordConfirm not same', 400);
 
-  const user = await User.findOne({ email }).select('+password');
-  if (!user) throw new CustomError('There is no user with email address', 404);
+  const user = await findUser(email);
 
   const correct = await user.correctPassword(password, user.password);
   if (!correct) throw new CustomError('Current password invalid', 400);
@@ -204,4 +177,21 @@ const sendEmail = async (options) => {
 
   // 3) Send email
   await transporter.sendMail(mailOptions);
+};
+
+const findUser = async (email, opt = { includePassword: true }) => {
+  let query = User.findOne({
+    email: {
+      $eq: email,
+    },
+  });
+
+  if (opt.includePassword) {
+    query = query.select('+password');
+  }
+
+  const user = await query;
+  if (!user) throw new CustomError('User not found', 401);
+
+  return user;
 };
