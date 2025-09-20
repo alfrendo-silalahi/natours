@@ -5,6 +5,7 @@ import CustomError from '../../utils/error.js';
 import User from '../users/users.model.js';
 import redisClient from '../../config/redis.config.js';
 import { sendEmail } from '../../config/smtp.config.js';
+import mongoose from 'mongoose';
 
 const roles = {
   USER: 'user',
@@ -29,15 +30,28 @@ export const signUp = async (req, res) => {
     throw new CustomError('password and passwordConfirm not same', 400);
   }
 
-  const newUser = await User.create({
-    name: userReq.name,
-    email: userReq.email,
-    password: userReq.password,
-    role: roles.USER,
-    passwordChangedAt: userReq.passwordChangedAt,
-  });
+  const session = await mongoose.startSession();
 
-  const token = signToken(newUser._id);
+  const { newUser, token } = await session.withTransaction(async () => {
+    const [newUser] = await User.create(
+      [
+        {
+          name: userReq.name,
+          email: userReq.email,
+          password: userReq.password,
+          role: roles.USER,
+        },
+      ],
+      { session },
+    );
+
+    const token = signToken(newUser._id);
+
+    return {
+      newUser,
+      token,
+    };
+  });
 
   res.status(201).json({
     status: 'success',

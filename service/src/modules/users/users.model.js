@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import validator from 'validator';
-import bycript from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -20,7 +20,6 @@ const userSchema = new mongoose.Schema({
     minlength: 8,
     select: false,
   },
-  passwordChangedAt: Date,
   photo: {
     type: String,
   },
@@ -31,7 +30,7 @@ const userSchema = new mongoose.Schema({
   },
   active: {
     type: Boolean,
-    default: true,
+    default: false,
   },
 });
 
@@ -40,7 +39,7 @@ userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 
   // Hash the password with cost 12
-  this.password = await bycript.hash(this.password, 12);
+  this.password = await bcrypt.hash(this.password, 12);
   this.passwordChangedAt = Date.now();
   next();
 });
@@ -55,7 +54,7 @@ userSchema.methods.correctPassword = async function (
   candidatePassword,
   userPassword,
 ) {
-  return await bycript.compare(candidatePassword, userPassword);
+  return await bcrypt.compare(candidatePassword, userPassword);
 };
 
 userSchema.methods.changedPasswordAfter = function (jwtTimestamp) {
