@@ -32,8 +32,9 @@ export const signUp = async (req, res) => {
 
   const session = await mongoose.startSession();
 
-  const { newUser, token } = await session.withTransaction(async () => {
-    const [newUser] = await User.create(
+  await session.withTransaction(async () => {
+    // Create new user into database
+    await User.create(
       [
         {
           name: userReq.name,
@@ -45,20 +46,55 @@ export const signUp = async (req, res) => {
       { session },
     );
 
-    const token = signToken(newUser._id);
+    const signUpVerifyCode = Math.floor(
+      100000 + Math.random() * 900000,
+    ).toString();
 
-    return {
-      newUser,
-      token,
-    };
+    const cacheKey = `sign_up_verify_code:${userReq.email}`;
+    await redisClient.setEx(cacheKey, 86400, signUpVerifyCode);
+
+    await sendEmail({
+      email: userReq.email,
+      subject: 'Your sign up verification code (valid for 24 hours)',
+      message: `Verification code: ${signUpVerifyCode}`,
+    });
   });
 
   res.status(201).json({
     status: 'success',
-    token,
-    data: {
-      user: newUser,
-    },
+  });
+};
+
+export const verifySignUpEmail = async (req, res) => {
+  const { email, signUpVerifyCode } = req.body;
+
+  const user = await findUser(email, { includePassword: false });
+
+  const cacheKey = `sign_up_verify_code:${user.email}`;
+  const cacheSignUpVerifyCode = await redisClient.get(cacheKey);
+
+  if (!cacheSignUpVerifyCode)
+    throw new CustomError('There is no sign up verify code from cache.', 401);
+
+  if (signUpVerifyCode !== cacheSignUpVerifyCode)
+    throw new CustomError('Sign up verify code invalid.', 401);
+
+  const session = await mongoose.startSession();
+
+  await session.withTransaction(async () => {
+    user.active = true;
+    await user.save({ session });
+
+    await redisClient.del(cacheKey);
+    await sendEmail({
+      email: user.email,
+      subject: 'Welcome to Natours',
+      message: 'Welcome to Natours',
+    });
+  });
+
+  res.status(200).json({
+    status: 'success',
   });
 };
 

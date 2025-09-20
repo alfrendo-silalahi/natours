@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
+import CustomError from '../../utils/error.js';
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -44,11 +45,11 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-userSchema.pre(/^find/, function (next) {
-  // this points to current query
-  this.where({ active: true });
-  next();
-});
+// userSchema.pre(/^find/, function (next) {
+//   // this points to current query
+//   this.where({ active: true });
+//   next();
+// });
 
 userSchema.methods.correctPassword = async function (
   candidatePassword,
