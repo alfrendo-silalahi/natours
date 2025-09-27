@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
-import CustomError from '../../utils/error.js';
+import CustomError, { ResourceNotFoundError } from '../../utils/error.js';
 import User from '../users/users.model.js';
 import redisClient from '../../config/redis.config.js';
 import { sendEmail } from '../../config/smtp.config.js';
@@ -218,7 +218,7 @@ const findUser = async (email, opt = { includePassword: true }) => {
   }
 
   const user = await query;
-  if (!user) throw new CustomError('User not found', 401);
+  if (!user) throw new ResourceNotFoundError('user', 'email', email);
 
   return user;
 };
