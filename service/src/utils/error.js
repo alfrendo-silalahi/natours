@@ -18,3 +18,13 @@ export class ResourceNotFoundError extends Error {
     Error.captureStackTrace(this, this.constructor);
   }
 }
+
+export class AuthenticationError extends Error {
+  constructor(message = 'Invalid email or password.') {
+    super(message);
+    this.statusCode = 401;
+    this.status = 'fail';
+    this.isOperational = true;
+    Error.captureStackTrace(this, this.constructor);
+  }
+}

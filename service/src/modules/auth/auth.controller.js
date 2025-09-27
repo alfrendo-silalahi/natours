@@ -1,7 +1,10 @@
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
-import CustomError, { ResourceNotFoundError } from '../../utils/error.js';
+import CustomError, {
+  AuthenticationError,
+  ResourceNotFoundError,
+} from '../../utils/error.js';
 import User from '../users/users.model.js';
 import redisClient from '../../config/redis.config.js';
 import { sendEmail } from '../../config/smtp.config.js';
@@ -104,7 +107,7 @@ export const signIn = async (req, res) => {
   const user = await findUser(email);
 
   const correct = await user.correctPassword(password, user.password);
-  if (!correct) throw new CustomError('Incorrect email or password', 401);
+  if (!correct) throw new AuthenticationError();
 
   const token = signToken(user._id);
   res.status(200).json({
@@ -142,7 +145,8 @@ export const validateForgotPasswordOtp = async (req, res) => {
   const redisOtpKey = `otp:${user.id}`;
   const otpCache = await redisClient.get(redisOtpKey);
 
-  if (otpCache !== otp) throw new CustomError('Invalid OTP!', 400);
+  if (otpCache !== otp)
+    throw new AuthenticationError('Invalid validate forgot password OTP.', 400);
 
   await redisClient.del(redisOtpKey);
 
