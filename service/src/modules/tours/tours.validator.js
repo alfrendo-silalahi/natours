@@ -2,7 +2,7 @@ import Joi from 'joi';
 
 const getAllToursSchema = Joi.object({
   sort: Joi.string().optional(),
-});
+}).unknown(true);
 
 export const getAllToursValidator = (req, res, next) => {
   const { error } = getAllToursSchema.validate(req.query, {
