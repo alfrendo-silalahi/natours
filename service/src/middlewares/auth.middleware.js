@@ -1,8 +1,11 @@
 import jwt from 'jsonwebtoken';
 import { promisify } from 'util';
 import CustomError from '../utils/error.js';
-import User from '../modules/users/users.model.js';
 import log from '../utils/logger.js';
+import db from '../config/mongodb.config.js';
+import { ObjectId } from 'mongodb';
+
+const usersCollection = db.collection('users');
 
 export const protect = async (req, res, next) => {
   // 1) Get token from Authorization header
@@ -18,7 +21,10 @@ export const protect = async (req, res, next) => {
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
   // 3) Check if user still exists
-  const freshUser = await User.findById(decoded.id);
+  const freshUser = await usersCollection.findOne({
+    _id: new ObjectId(decoded.id),
+  });
+
   if (!freshUser)
     throw new CustomError(
       'The token belonging to this user does no longer exist',
@@ -26,11 +32,17 @@ export const protect = async (req, res, next) => {
     );
 
   // 4) Check if user changed password after token was issued
-  if (freshUser.changedPasswordAfter(decoded.iat))
-    throw new CustomError(
-      'User recently changed password, please login again!',
-      401,
-    );
+  if (freshUser.passwordChangedAt) {
+    const passwordChangedAt = new Date(freshUser.passwordChangedAt);
+    const changedTimestamp = passwordChangedAt.getTime() / 1000;
+
+    if (decoded.iat < changedTimestamp) {
+      throw new CustomError(
+        'User recently changed password, please sign in again.',
+        401,
+      );
+    }
+  }
 
   // Grant access to protected route
   req.user = freshUser;
