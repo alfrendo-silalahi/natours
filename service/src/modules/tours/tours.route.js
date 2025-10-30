@@ -14,10 +14,7 @@ tourRouter.route('/monthly-plan/:year').get(tourController.getMonthlyPlan);
 
 tourRouter
   .route('/')
-  .get(
-    toursValidator.getAllToursValidator,
-    tourController.getAllTours,
-  )
+  .get(toursValidator.getAllToursValidator, tourController.getAllTours)
   .post(tourController.createTour);
 
 tourRouter

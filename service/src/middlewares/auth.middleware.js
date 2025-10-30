@@ -21,9 +21,19 @@ export const protect = async (req, res, next) => {
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
   // 3) Check if user still exists
-  const freshUser = await usersCollection.findOne({
-    _id: new ObjectId(decoded.id),
-  });
+  const freshUser = await usersCollection.findOne(
+    {
+      _id: new ObjectId(decoded.id),
+    },
+    {
+      projection: {
+        _id: 1,
+        name: 1,
+        email: 1,
+        passwordChangedAt: 1,
+      },
+    },
+  );
 
   if (!freshUser)
     throw new CustomError(
