@@ -7,7 +7,7 @@ import { ObjectId } from 'mongodb';
 
 const usersCollection = db.collection('users');
 
-export const protect = async (req, res, next) => {
+export const protect = async (req, _res, next) => {
   // 1) Get token from Authorization header
   if (
     !req.headers.authorization ||
@@ -23,7 +23,7 @@ export const protect = async (req, res, next) => {
   // 3) Check if user still exists
   const freshUser = await usersCollection.findOne(
     {
-      _id: new ObjectId(decoded.id),
+      _id: ObjectId.createFromHexString(decoded.id),
     },
     {
       projection: {
@@ -34,6 +34,8 @@ export const protect = async (req, res, next) => {
       },
     },
   );
+
+  console.log({ freshUser });
 
   if (!freshUser)
     throw new CustomError(
@@ -62,7 +64,7 @@ export const protect = async (req, res, next) => {
 
 export const restrictTo =
   (...roles) =>
-  (req, res, next) => {
+  (req, _res, next) => {
     log.info(roles);
     if (!roles.includes(req.user.role)) {
       throw new CustomError(
