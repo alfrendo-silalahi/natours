@@ -1,10 +1,14 @@
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
-import CustomError from '../../utils/error.js';
+import CustomError, {
+  AuthenticationError,
+  ResourceNotFoundError,
+} from '../../utils/error.js';
 import User from '../users/users.model.js';
 import redisClient from '../../config/redis.config.js';
 import { sendEmail } from '../../config/smtp.config.js';
+import mongoose from 'mongoose';
 
 const roles = {
   USER: 'user',
@@ -29,22 +33,71 @@ export const signUp = async (req, res) => {
     throw new CustomError('password and passwordConfirm not same', 400);
   }
 
-  const newUser = await User.create({
-    name: userReq.name,
-    email: userReq.email,
-    password: userReq.password,
-    role: roles.USER,
-    passwordChangedAt: userReq.passwordChangedAt,
-  });
+  const session = await mongoose.startSession();
 
-  const token = signToken(newUser._id);
+  await session.withTransaction(async () => {
+    // Create new user into database
+    await User.create(
+      [
+        {
+          name: userReq.name,
+          email: userReq.email,
+          password: userReq.password,
+          role: roles.USER,
+        },
+      ],
+      { session },
+    );
+
+    const signUpVerifyCode = Math.floor(
+      100000 + Math.random() * 900000,
+    ).toString();
+
+    const cacheKey = `sign_up_verify_code:${userReq.email}`;
+    await redisClient.setEx(cacheKey, 86400, signUpVerifyCode);
+
+    await sendEmail({
+      email: userReq.email,
+      subject: 'Your sign up verification code (valid for 24 hours)',
+      message: `Verification code: ${signUpVerifyCode}`,
+    });
+  });
 
   res.status(201).json({
     status: 'success',
-    token,
-    data: {
-      user: newUser,
-    },
+  });
+};
+
+export const verifySignUpEmail = async (req, res) => {
+  const { email, signUpVerifyCode } = req.body;
+
+  const user = await findUser(email, { includePassword: false });
+
+  const cacheKey = `sign_up_verify_code:${user.email}`;
+  const cacheSignUpVerifyCode = await redisClient.get(cacheKey);
+
+  if (!cacheSignUpVerifyCode)
+    throw new CustomError('There is no sign up verify code from cache.', 401);
+
+  if (signUpVerifyCode !== cacheSignUpVerifyCode)
+    throw new CustomError('Sign up verify code invalid.', 401);
+
+  const session = await mongoose.startSession();
+
+  await session.withTransaction(async () => {
+    user.active = true;
+    await user.save({ session });
+
+    await redisClient.del(cacheKey);
+    await sendEmail({
+      email: user.email,
+      subject: 'Welcome to Natours',
+      message: 'Welcome to Natours',
+    });
+  });
+
+  res.status(200).json({
+    status: 'success',
   });
 };
 
@@ -54,7 +107,7 @@ export const signIn = async (req, res) => {
   const user = await findUser(email);
 
   const correct = await user.correctPassword(password, user.password);
-  if (!correct) throw new CustomError('Incorrect email or password', 401);
+  if (!correct) throw new AuthenticationError();
 
   const token = signToken(user._id);
   res.status(200).json({
@@ -92,7 +145,8 @@ export const validateForgotPasswordOtp = async (req, res) => {
   const redisOtpKey = `otp:${user.id}`;
   const otpCache = await redisClient.get(redisOtpKey);
 
-  if (otpCache !== otp) throw new CustomError('Invalid OTP!', 400);
+  if (otpCache !== otp)
+    throw new AuthenticationError('Invalid validate forgot password OTP.', 400);
 
   await redisClient.del(redisOtpKey);
 
@@ -168,7 +222,7 @@ const findUser = async (email, opt = { includePassword: true }) => {
   }
 
   const user = await query;
-  if (!user) throw new CustomError('User not found', 401);
+  if (!user) throw new ResourceNotFoundError('user', 'email', email);
 
   return user;
 };

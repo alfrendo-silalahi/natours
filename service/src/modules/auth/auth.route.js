@@ -7,6 +7,7 @@ import * as authValidator from './auth.validator.js';
 const authRouter = express.Router();
 
 authRouter.post('/sign-up', authController.signUp);
+authRouter.post('/sign-up-verify', authController.verifySignUpEmail);
 
 authRouter.post(
   '/sign-in',

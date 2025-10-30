@@ -2,7 +2,7 @@ import express from 'express';
 
 import * as tourController from './tours.controller.js';
 import * as authMiddleware from '../../middlewares/auth.middleware.js';
-
+import * as toursValidator from './tours.validator.js';
 const tourRouter = express.Router();
 
 tourRouter
@@ -14,7 +14,10 @@ tourRouter.route('/monthly-plan/:year').get(tourController.getMonthlyPlan);
 
 tourRouter
   .route('/')
-  .get(authMiddleware.protect, tourController.getAllTours)
+  .get(
+    toursValidator.getAllToursValidator,
+    tourController.getAllTours,
+  )
   .post(tourController.createTour);
 
 tourRouter
