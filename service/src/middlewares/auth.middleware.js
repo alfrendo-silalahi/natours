@@ -35,8 +35,6 @@ export const protect = async (req, _res, next) => {
     },
   );
 
-  console.log({ freshUser });
-
   if (!freshUser)
     throw new CustomError(
       'The token belonging to this user does no longer exist',
