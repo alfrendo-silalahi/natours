@@ -1,6 +1,8 @@
 import Tour from './tours.model.js';
 import { APIFeatures } from '../../utils/util.js';
 import CustomError from '../../utils/error.js';
+import log from '../../utils/logger.js';
+import pool from '../../config/postgres.config.js';
 
 export const aliasTopTours = (req, _res, next) => {
   req.query.limit = '5';
@@ -41,11 +43,32 @@ export const createTour = async (req, res, _next) => {
 
 export const getTour = async (req, res, _next) => {
   const { id } = req.params;
-  const tour = await Tour.findById(id);
-  if (!tour) {
-    throw new CustomError(`No tour found with id ${id}`, 404);
+  const client = await pool.connect();
+  try {
+    const response = await client.query(
+      `
+      SELECT *
+      FROM tours
+      WHERE id = $1
+      `,
+      [id],
+    );
+
+    console.log({ response });
+
+    const tour = response.rows[0];
+    console.log({ tour });
+
+    if (!tour) {
+      throw new CustomError(`No tour found with id ${id}`, 404);
+    }
+    res.status(200).json({ status: 'success', data: { tour } });
+  } catch (err) {
+    log.error(err.message);
+    throw err;
+  } finally {
+    client.release();
   }
-  res.status(200).json({ status: 'success', data: { tour } });
 };
 
 export const updateTour = async (req, res, _next) => {

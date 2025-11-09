@@ -1,17 +1,17 @@
-import crypto from 'crypto';
+import crypto, { randomUUID } from 'crypto';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 import CustomError, {
   AuthenticationError,
   ResourceNotFoundError,
 } from '../../utils/error.js';
-import User from '../users/users.model.js';
+import pool from '../../config/postgres.config.js';
 import redisClient from '../../config/redis.config.js';
 import { sendEmail } from '../../config/smtp.config.js';
-import mongoose from 'mongoose';
 
 const roles = {
-  USER: 'user',
+  USER: 'USER',
 };
 
 const signToken = (userId) =>
@@ -33,20 +33,18 @@ export const signUp = async (req, res) => {
     throw new CustomError('password and passwordConfirm not same', 400);
   }
 
-  const session = await mongoose.startSession();
+  // TODO
+  const client = await pool.connect();
 
-  await session.withTransaction(async () => {
-    // Create new user into database
-    await User.create(
-      [
-        {
-          name: userReq.name,
-          email: userReq.email,
-          password: userReq.password,
-          role: roles.USER,
-        },
-      ],
-      { session },
+  try {
+    await client.query('BEGIN');
+    const hashedPassword = await bcrypt.hash(userReq.password, 12);
+    const _response = await client.query(
+      `
+      INSERT INTO users (id, name, email, password)
+      VALUES ($1, $2, $3, $4)
+    `,
+      [randomUUID(), userReq.name, userReq.email, hashedPassword],
     );
 
     const signUpVerifyCode = Math.floor(
@@ -61,11 +59,15 @@ export const signUp = async (req, res) => {
       subject: 'Your sign up verification code (valid for 24 hours)',
       message: `Verification code: ${signUpVerifyCode}`,
     });
-  });
 
-  res.status(201).json({
-    status: 'success',
-  });
+    await client.query('COMMIT');
+
+    res.status(201).json({
+      status: 'success',
+    });
+  } finally {
+    client.release();
+  }
 };
 
 export const verifySignUpEmail = async (req, res) => {
@@ -105,11 +107,10 @@ export const signIn = async (req, res) => {
   const { email, password } = req.body;
 
   const user = await findUser(email);
-
-  const correct = await user.correctPassword(password, user.password);
+  const correct = await bcrypt.compare(password, user.password);
   if (!correct) throw new AuthenticationError();
 
-  const token = signToken(user._id);
+  const token = signToken(user.id);
   res.status(200).json({
     status: 'success',
     token,
@@ -175,15 +176,33 @@ export const resetPassword = async (req, res) => {
   if (resetPasswordTokenCache !== resetPasswordToken)
     throw new CustomError('Invalid reset password token!', 400);
 
-  user.password = newPassword;
-  await user.save({ validateBeforeSave: false });
+  // update password
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `
+      UPDATE users
+      SET password = $1,
+        password_changed_at = $2 
+      WHERE id = $3
+      `,
+      [await bcrypt.hash(newPassword, 12), new Date().toISOString(), user.id],
+    );
 
-  await redisClient.del(redisResetPasswordTokenKey);
-
-  res.status(200).json({
-    status: 'success',
-    message: 'Password updated successfully',
-  });
+    await redisClient.del(redisResetPasswordTokenKey);
+    await client.query('COMMIT');
+    res.status(200).json({
+      status: 'success',
+      message: 'Password updated successfully',
+    });
+  } catch (err) {
+    log.error(err.message);
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 };
 
 export const updatePassword = async (req, res) => {
@@ -211,18 +230,30 @@ export const updatePassword = async (req, res) => {
 };
 
 const findUser = async (email, opt = { includePassword: true }) => {
-  let query = User.findOne({
-    email: {
-      $eq: email,
-    },
-  });
-
+  let query;
   if (opt.includePassword) {
-    query = query.select('+password');
+    query = `
+      SELECT id, name, email, password
+      FROM users
+      WHERE email = $1
+      `;
+  } else {
+    query = `
+      SELECT id, name, email
+      FROM users
+      WHERE email = $1
+    `;
   }
 
-  const user = await query;
-  if (!user) throw new ResourceNotFoundError('user', 'email', email);
-
-  return user;
+  const client = await pool.connect();
+  try {
+    const response = await client.query(query, [email]);
+    const user = response.rows[0];
+    if (!user) throw new ResourceNotFoundError('user', 'email', email);
+    return user;
+  } catch (err) {
+    throw err;
+  } finally {
+    client.release();
+  }
 };
