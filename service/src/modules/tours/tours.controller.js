@@ -54,10 +54,7 @@ export const getTour = async (req, res, _next) => {
       [id],
     );
 
-    console.log({ response });
-
     const tour = response.rows[0];
-    console.log({ tour });
 
     if (!tour) {
       throw new CustomError(`No tour found with id ${id}`, 404);
