@@ -3,6 +3,8 @@ import { APIFeatures } from '../../utils/util.js';
 import CustomError from '../../utils/error.js';
 import log from '../../utils/logger.js';
 import pool from '../../config/postgres.config.js';
+import { randomUUID } from 'crypto';
+import slugify from 'slugify';
 
 export const aliasTopTours = (req, _res, next) => {
   req.query.limit = '5';
@@ -31,14 +33,39 @@ export const getAllTours = async (req, res, _next) => {
 };
 
 export const createTour = async (req, res, _next) => {
-  const tour = new Tour(req.body);
-  const newTour = await tour.save();
-  res.status(201).json({
-    status: 'success',
-    data: {
-      tour: newTour,
-    },
-  });
+  const tourReq = req.body;
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+    const query = `
+      INSERT INTO tours (id, name, slug, duration, max_group_size, difficulty, price, summary, description)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `;
+    const params = [
+      randomUUID(),
+      tourReq.name,
+      slugify(tourReq.name),
+      tourReq.duration,
+      tourReq.maxGroupSize,
+      tourReq.difficulty,
+      tourReq.price,
+      tourReq.summary,
+      tourReq.description,
+    ];
+    await client.query(query, params);
+    await client.query('COMMIT');
+
+    res.status(201).json({
+      status: 'success',
+    });
+  } catch (err) {
+    log.error(err.message);
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 };
 
 export const getTour = async (req, res, _next) => {
