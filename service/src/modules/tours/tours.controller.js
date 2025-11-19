@@ -97,17 +97,66 @@ export const getTour = async (req, res, _next) => {
 
 export const updateTour = async (req, res, _next) => {
   const { id } = req.params;
+  const tourReq = req.body;
 
-  const tour = await Tour.findByIdAndUpdate(id, req.body, {
-    new: true,
-    runValidators: true,
-  });
+  const client = await pool.connect();
 
-  if (!tour) {
-    throw new CustomError(`No tour found with id ${id}`, 404);
+  try {
+    // get tour
+    const response = await client.query(
+      `
+      SELECT EXISTS (
+        SELECT 1
+        FROM tours
+        WHERE id = $1
+      )
+      `,
+      [id],
+    );
+
+    const tour = response.rows[0];
+
+    if (!tour.exists) {
+      throw new CustomError(`No tour found with id ${id}`, 404);
+    }
+
+    // update tour
+    await client.query('BEGIN');
+    const query = `
+      UPDATE tours
+      SET name = $2,
+          slug = $3,
+          duration = $4,
+          max_group_size = $5,
+          difficulty = $6,
+          price = $7,
+          summary = $8,
+          description = $9
+      WHERE id = $1
+    `;
+    const params = [
+      id,
+      tourReq.name,
+      slugify(tourReq.name),
+      tourReq.duration,
+      tourReq.maxGroupSize,
+      tourReq.difficulty,
+      tourReq.price,
+      tourReq.summary,
+      tourReq.description,
+    ];
+    await client.query(query, params);
+    await client.query('COMMIT');
+
+    res.status(200).json({
+      status: 'success',
+    });
+  } catch (err) {
+    log.error(err.message);
+    throw err;
+  } finally {
+    client.release();
   }
-
-  res.status(200).json({ status: 'success', data: { tour } });
 };
 
 export const deleteTour = async (req, res, _next) => {
