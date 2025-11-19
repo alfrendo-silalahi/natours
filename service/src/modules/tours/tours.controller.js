@@ -1,35 +1,40 @@
 import Tour from './tours.model.js';
-import { APIFeatures } from '../../utils/util.js';
 import CustomError from '../../utils/error.js';
 import log from '../../utils/logger.js';
 import pool from '../../config/postgres.config.js';
 import { randomUUID } from 'crypto';
 import slugify from 'slugify';
 
-export const aliasTopTours = (req, _res, next) => {
-  req.query.limit = '5';
-  req.query.sort = '-ratingsAverage,price';
-  req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
-  next();
-};
-
 export const getAllTours = async (req, res, _next) => {
-  // EXECUTE QUERY
-  const features = new APIFeatures(Tour.find(), req.query)
-    .filter()
-    .sort()
-    .limitFields()
-    .pagination();
-  const tours = await features.query;
+  const { page = 1, size = 10 } = req.query;
 
-  // Send response
-  res.status(200).json({
-    status: 'success',
-    result: tours.length,
-    data: {
-      tours,
-    },
-  });
+  const client = await pool.connect();
+  try {
+    const result = await client.query(
+      `
+        SELECT * FROM tours
+        WHERE is_deleted = FALSE
+        LIMIT $1
+        OFFSET ($2 - 1) * $3
+    `,
+      [size, page, size],
+    );
+
+    const tours = result.rows;
+
+    res.status(200).json({
+      status: 'success',
+      result: tours.length,
+      data: {
+        tours,
+      },
+    });
+  } catch (err) {
+    log.error(err.message);
+    throw err;
+  } finally {
+    client.release();
+  }
 };
 
 export const createTour = async (req, res, _next) => {
