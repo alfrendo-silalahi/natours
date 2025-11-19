@@ -76,7 +76,7 @@ export const getTour = async (req, res, _next) => {
       `
       SELECT *
       FROM tours
-      WHERE id = $1
+      WHERE id = $1 AND is_deleted = FALSE
       `,
       [id],
     );
@@ -103,18 +103,18 @@ export const updateTour = async (req, res, _next) => {
 
   try {
     // get tour
-    const response = await client.query(
+    const result = await client.query(
       `
       SELECT EXISTS (
         SELECT 1
         FROM tours
-        WHERE id = $1
+        WHERE id = $1 AND is_deleted = FALSE
       )
       `,
       [id],
     );
 
-    const tour = response.rows[0];
+    const tour = result.rows[0];
 
     if (!tour.exists) {
       throw new CustomError(`No tour found with id ${id}`, 404);
@@ -136,7 +136,7 @@ export const updateTour = async (req, res, _next) => {
     `;
     const params = [
       id,
-      tourReq.name,
+      tourReq.nae,
       slugify(tourReq.name),
       tourReq.duration,
       tourReq.maxGroupSize,
@@ -153,6 +153,7 @@ export const updateTour = async (req, res, _next) => {
     });
   } catch (err) {
     log.error(err.message);
+    await client.query('ROLLBACK');
     throw err;
   } finally {
     client.release();
@@ -161,15 +162,49 @@ export const updateTour = async (req, res, _next) => {
 
 export const deleteTour = async (req, res, _next) => {
   const { id } = req.params;
-  const tour = await Tour.findOneAndDelete({ _id: id });
 
-  if (!tour) {
-    throw new CustomError(`No tour found with id ${id}`, 404);
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const result = await client.query(
+      `
+      SELECT EXISTS (
+        SELECT 1
+        FROM tours
+        WHERE id = $1 AND is_deleted = FALSE
+      )
+      `,
+      [id],
+    );
+
+    const tour = result.rows[0];
+    if (!tour.exists) {
+      throw new CustomError(`No tour found with id ${id}`, 404);
+    }
+
+    await client.query(
+      `
+      UPDATE tours
+      SET is_deleted = TRUE
+      WHERE id = $1
+      `,
+      [id],
+    );
+
+    await client.query('COMMIT');
+
+    res.status(200).json({
+      status: 'success',
+    });
+  } catch (err) {
+    log.error(err.message);
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
   }
-
-  res.status(200).json({
-    status: 'success',
-  });
 };
 
 export const getTourStats = async (_req, res, _next) => {
