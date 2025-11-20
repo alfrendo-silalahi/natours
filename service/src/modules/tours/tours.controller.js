@@ -5,7 +5,7 @@ import pool from '../../config/postgres.config.js';
 import { randomUUID } from 'crypto';
 import slugify from 'slugify';
 
-export const getAllTours = async (req, res, _next) => {
+export const getAllTours = async (req, res) => {
   const { page = 1, size = 10 } = req.query;
 
   const client = await pool.connect();
@@ -37,9 +37,8 @@ export const getAllTours = async (req, res, _next) => {
   }
 };
 
-export const createTour = async (req, res, _next) => {
+export const createTour = async (req, res) => {
   const tourReq = req.body;
-  const client = await pool.connect();
 
   try {
     await client.query('BEGIN');
@@ -73,7 +72,7 @@ export const createTour = async (req, res, _next) => {
   }
 };
 
-export const getTour = async (req, res, _next) => {
+export const getTour = async (req, res) => {
   const { id } = req.params;
   const client = await pool.connect();
   try {
@@ -100,7 +99,7 @@ export const getTour = async (req, res, _next) => {
   }
 };
 
-export const updateTour = async (req, res, _next) => {
+export const updateTour = async (req, res) => {
   const { id } = req.params;
   const tourReq = req.body;
 
@@ -165,7 +164,7 @@ export const updateTour = async (req, res, _next) => {
   }
 };
 
-export const deleteTour = async (req, res, _next) => {
+export const deleteTour = async (req, res) => {
   const { id } = req.params;
 
   const client = await pool.connect();
@@ -212,45 +211,30 @@ export const deleteTour = async (req, res, _next) => {
   }
 };
 
-export const getTourStats = async (_req, res, _next) => {
-  const stats = await Tour.aggregate([
-    {
-      $match: {
-        ratingsAverage: {
-          $gte: 4.5,
-        },
-      },
-    },
-    {
-      $group: {
-        _id: { $toUpper: '$difficulty' },
-        numTours: {
-          $sum: 1,
-        },
-        numRatings: {
-          $sum: '$ratingsQuantity',
-        },
-        avgRating: {
-          $avg: '$ratingsAverage',
-        },
-        avgPrice: {
-          $avg: '$price',
-        },
-        minPrice: {
-          $min: '$price',
-        },
-        maxPrice: {
-          $max: '$price',
-        },
-      },
-    },
-    {
-      $sort: {
-        avgPrice: 1,
-      },
-    },
-  ]);
-  res.status(200).json({ status: 'success', stats });
+export const getTourStats = async (_req, res) => {
+  const client = await pool.connect();
+  try {
+    const result = await client.query(`
+      SELECT UPPER(difficulty) AS difficulty,
+        COUNT(*)::int AS "numTours",
+        COALESCE(SUM(ratings_quantity)::int, 0) AS "numRatings",
+        AVG(ratings_average) AS "avgRating",
+        AVG(price) AS "avgPrice",
+        MIN(price) AS "minPrice",
+        MAX(price) AS "maxPrice"
+      FROM tours
+      WHERE is_deleted = FALSE AND ratings_average >= 4.5
+      GROUP BY UPPER(difficulty)
+      ORDER BY "avgPrice" ASC
+      `);
+    const stats = result.rows;
+    res.status(200).json({ status: 'success', stats });
+  } catch (err) {
+    log.error(err.message);
+    throw err;
+  } finally {
+    client.release();
+  }
 };
 
 export const getMonthlyPlan = async (req, res, _next) => {

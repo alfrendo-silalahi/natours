@@ -5,9 +5,9 @@ import * as authMiddleware from '../../middlewares/auth.middleware.js';
 import * as toursValidator from './tours.validator.js';
 const tourRouter = express.Router();
 
-tourRouter
-  .route('/top-5-cheap')
-  .get(tourController.aliasTopTours, tourController.getAllTours);
+// tourRouter
+//   .route('/top-5-cheap')
+//   .get(tourController.aliasTopTours, tourController.getAllTours);
 
 tourRouter.route('/tour-stats').get(tourController.getTourStats);
 tourRouter.route('/monthly-plan/:year').get(tourController.getMonthlyPlan);
