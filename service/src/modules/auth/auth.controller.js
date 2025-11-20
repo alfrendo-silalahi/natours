@@ -10,6 +10,8 @@ import pool from '../../config/postgres.config.js';
 import redisClient from '../../config/redis.config.js';
 import { sendEmail } from '../../config/smtp.config.js';
 
+import log from '../../utils/logger.js';
+
 const roles = {
   USER: 'USER',
 };
@@ -106,15 +108,34 @@ export const verifySignUpEmail = async (req, res) => {
 export const signIn = async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await findUser(email);
-  const correct = await bcrypt.compare(password, user.password);
-  if (!correct) throw new AuthenticationError();
+  const client = await pool.connect();
+  try {
+    const result = await client.query(
+      `
+      SELECT id, email, password
+      FROM users
+      WHERE email = $1 AND is_deleted = FALSE
+    `,
+      [email],
+    );
 
-  const token = signToken(user.id);
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+    const user = result.rows[0];
+    if (!user) throw new ResourceNotFoundError('user', 'email', email);
+
+    const correct = await bcrypt.compare(password, user.password);
+    if (!correct) throw new AuthenticationError();
+
+    const token = signToken(user.id);
+    res.status(200).json({
+      status: 'success',
+      token,
+    });
+  } catch (err) {
+    log.error(err.message);
+    throw err;
+  } finally {
+    client.release();
+  }
 };
 
 export const forgotPassword = async (req, res) => {
@@ -215,18 +236,43 @@ export const updatePassword = async (req, res) => {
   if (newPassword !== newPasswordConfirm)
     throw new CustomError('newPassword and newPasswordConfirm not same', 400);
 
-  const user = await findUser(email);
+  if (password === newPassword) {
+    throw new CustomError(
+      'New password must be different from current password',
+      400,
+    );
+  }
 
-  const correct = await user.correctPassword(password, user.password);
+  const user = await findUser(email);
+  const correct = await bcrypt.compare(password, user.password);
   if (!correct) throw new CustomError('Current password invalid', 400);
 
-  user.password = newPassword;
-  user.save({ validateBeforeSave: false });
+  // save new password
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `
+      UPDATE users
+      SET password = $1,
+        password_changed_at = $2 
+      WHERE id = $3
+      `,
+      [await bcrypt.hash(newPassword, 12), new Date().toISOString(), user.id],
+    );
+    await client.query('COMMIT');
 
-  res.status(200).json({
-    status: 'success',
-    message: 'Password updated successfully',
-  });
+    res.status(200).json({
+      status: 'success',
+      message: 'Password updated successfully',
+    });
+  } catch (err) {
+    log.error(err.message);
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 };
 
 const findUser = async (email, opt = { includePassword: true }) => {
@@ -235,13 +281,13 @@ const findUser = async (email, opt = { includePassword: true }) => {
     query = `
       SELECT id, name, email, password
       FROM users
-      WHERE email = $1
+      WHERE email = $1 AND is_deleted = FALSE
       `;
   } else {
     query = `
       SELECT id, name, email
       FROM users
-      WHERE email = $1
+      WHERE email = $1 AND is_deleted = FALSE
     `;
   }
 

@@ -1,4 +1,3 @@
-import Tour from './tours.model.js';
 import CustomError from '../../utils/error.js';
 import log from '../../utils/logger.js';
 import pool from '../../config/postgres.config.js';
@@ -237,51 +236,4 @@ export const getTourStats = async (_req, res) => {
   }
 };
 
-export const getMonthlyPlan = async (req, res, _next) => {
-  const year = parseInt(req.params.year);
-  const plan = await Tour.aggregate([
-    {
-      $unwind: '$startDates',
-    },
-    {
-      $match: {
-        startDates: {
-          $gte: new Date(`${year}-01-01`),
-          $lte: new Date(`${year}-12-31`),
-        },
-      },
-    },
-    {
-      $group: {
-        _id: {
-          $month: '$startDates',
-        },
-        numTourStarts: {
-          $sum: 1,
-        },
-        tours: {
-          $push: '$name',
-        },
-      },
-    },
-    {
-      $addFields: {
-        month: '$_id',
-      },
-    },
-    {
-      $project: {
-        _id: 0,
-      },
-    },
-    {
-      $sort: {
-        numTourStarts: 1,
-      },
-    },
-    {
-      $limit: 10,
-    },
-  ]);
-  res.status(200).json({ status: 'success', plan });
-};
+// FUTURE: get monthly plan

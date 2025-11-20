@@ -53,7 +53,7 @@ const handleJWTError = () =>
 const handleTokenExpiredError = () =>
   new CustomError('Token expired. Please log in again!', 401);
 
-export default function globalErrorHandler(err, req, res, next) {
+export default function globalErrorHandler(err, _req, res, _next) {
   log.error(err.stack);
 
   err.statusCode = err.statusCode || 500;
