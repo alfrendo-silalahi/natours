@@ -8,7 +8,7 @@ export const protect = async (req, _res, next) => {
   // 1) Get token from Authorization header
   if (
     !req.headers.authorization ||
-    !req.headers.authorization.startsWith('Bearer')
+    !req.headers.authorization.startsWith('Bearer ')
   ) {
     throw new CustomError('Authorization invalid', 401);
   }
