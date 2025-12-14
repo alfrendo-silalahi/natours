@@ -1,5 +1,4 @@
 import CustomError from '../../utils/error.js';
-import User from './users.model.js';
 
 export const getAllUsers = async (req, res, next) => {
   const users = await User.find();

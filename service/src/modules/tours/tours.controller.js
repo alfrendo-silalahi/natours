@@ -11,15 +11,46 @@ export const getAllTours = async (req, res) => {
   try {
     const result = await client.query(
       `
-        SELECT * FROM tours
-        WHERE is_deleted = FALSE
-        LIMIT $1
-        OFFSET ($2 - 1) * $3
+      SELECT
+        t.id,
+        t.name,
+        t.slug,
+        t.duration,
+        t.max_group_size as "maxGroupSize",
+        t.difficulty,
+        t.ratings_average as "ratingsAverage",
+        t.ratings_quantity as "ratingsQuantity",
+        t.price,
+        t.summary,
+        t.description,
+        t.price_discount as "priceDiscount",
+        t.image_cover as "imageCover",
+        u.id as "guideId",
+        u.name as "guideName",
+        u.email as "guideEmail"
+      FROM tours t
+      JOIN users u
+      ON t.user_id = u.id
+      WHERE t.is_deleted = FALSE
+      LIMIT $1
+      OFFSET ($2 - 1) * $3
     `,
       [size, page, size],
     );
 
-    const tours = result.rows;
+    const rows = result.rows;
+
+    const tours = rows.map((row) => {
+      const { guideId, guideName, guideEmail, ...tourData } = row;
+      return {
+        ...tourData,
+        guide: {
+          id: guideId,
+          name: guideName,
+          email: guideEmail,
+        },
+      };
+    });
 
     res.status(200).json({
       status: 'success',
