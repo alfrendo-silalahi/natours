@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: service
+
+  threads:
+    virtual:
+      enabled: true
+
+  datasource:
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    url: ${DATABASE_HOST}
