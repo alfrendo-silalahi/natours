@@ -1,14 +1,12 @@
 package com.natours.service.modules.tour;
 
 import com.natours.service.common.dto.BaseResponse;
+import com.natours.service.modules.tour.dto.GetTourResponse;
 import com.natours.service.modules.tour.dto.GetToursResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 
@@ -25,10 +23,25 @@ public class TourController {
     ) {
         GetToursResponse getToursResponse = tourService.getTours(page, size);
         return ResponseEntity.ok(
-                BaseResponse .<GetToursResponse>builder()
+                BaseResponse.<GetToursResponse>builder()
                         .code(HttpStatus.OK.value())
                         .message("success")
                         .data(getToursResponse)
+                        .timestamp(Instant.now())
+                        .build()
+        );
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<BaseResponse<GetTourResponse>> getTour(
+            @PathVariable String id
+    ) {
+        GetTourResponse getTourResponse = tourService.getTour(id);
+        return ResponseEntity.ok(
+                BaseResponse.<GetTourResponse>builder()
+                        .code(HttpStatus.OK.value())
+                        .message("success")
+                        .data(getTourResponse)
                         .timestamp(Instant.now())
                         .build()
         );

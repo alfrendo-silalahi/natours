@@ -9,9 +9,8 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class BaseResponse<T> {
+public class BaseErrorResponse {
     private int code;
-    private String message;
-    private T data;
+    private String error;
     private Instant timestamp;
 }
